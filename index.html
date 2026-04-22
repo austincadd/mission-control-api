@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control</title>
+  <style>
+    :root{--bg:#0c1017;--panel:#121926;--panel2:#1a2436;--line:#2a3448;--text:#e6ebf7;--muted:#97a4bb;--accent:#79a7ff;--ok:#33cc8a;--warn:#f1b44f;--danger:#ff6f7c;--radius:12px;--font:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial}
+    body.light{--bg:#f4f7fc;--panel:#fff;--panel2:#f7f9ff;--line:#dbe3f3;--text:#1d2432;--muted:#5d6b84}
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:radial-gradient(circle at top right,rgba(120,160,255,.12),transparent 35%),var(--bg);color:var(--text);font-family:var(--font)}
+    .app{display:grid;grid-template-columns:260px 1fr;height:100vh}.sidebar{border-right:1px solid var(--line);padding:12px;display:grid;grid-template-rows:auto auto 1fr auto;gap:10px;background:var(--panel)}
+    .main{display:grid;grid-template-rows:auto auto 1fr}.top{padding:12px;border-bottom:1px solid var(--line);display:grid;gap:8px}.content{padding:12px;overflow:auto}
+    button,input,select,textarea{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px} input,select,textarea{padding:9px} button{padding:8px 10px;cursor:pointer}
+    .btn{background:linear-gradient(180deg,#8ab1ff,#6f99ef);color:#06122e;border:none;font-weight:600}.project-list{overflow:auto;display:grid;gap:6px}
+    .project-item{padding:9px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.project-item.active{background:var(--panel2);border-color:#4d6392}
+    .row{display:flex;align-items:center;gap:8px}.space{justify-content:space-between}.muted{color:var(--muted)} .tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:transparent;cursor:pointer}.tab.active{background:var(--panel2)}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}.stats{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:10px}.stat{padding:10px}.stat .v{font-size:21px;font-weight:700}
+    table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted);cursor:pointer}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}.dot{width:8px;height:8px;border-radius:50%}
+    .s-backlog,.s-todo{background:#8492a6}.s-in-progress,.s-running,.s-queued{background:var(--accent)}.s-in-review{background:var(--warn)}.s-done,.s-success{background:var(--ok)}.s-cancelled,.s-failed{background:var(--danger)}
+    .panel{position:fixed;right:-640px;top:0;height:100vh;width:min(640px,100vw);background:var(--panel);border-left:1px solid var(--line);transition:.2s;padding:12px;overflow:auto;z-index:9}.panel.open{right:0}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.2s;z-index:8}.overlay.show{opacity:1;pointer-events:auto}
+    .run-events{max-height:220px;overflow:auto;background:rgba(0,0,0,.15);border:1px solid var(--line);border-radius:10px;padding:8px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+    .activity-feed{max-height:280px;overflow:auto;display:grid;gap:6px}
+    .event-pill{font-size:11px;padding:2px 7px;border:1px solid var(--line);border-radius:999px}
+    .toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);border:1px solid var(--line);background:#111c2d;padding:9px 12px;border-radius:10px;opacity:0;transition:.2s}.toast.show{opacity:1}
+    @media (max-width:920px){.app{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--line)}.stats{grid-template-columns:repeat(2,1fr)}.panel{width:100vw}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="row"><strong>Mission Control</strong><span class="muted" style="font-size:12px">Cmd/Ctrl+K</span></div>
+    <button id="newProjectBtn" class="btn">+ New Project</button>
+    <div id="projectList" class="project-list"></div>
+    <div class="row space"><button id="navProjects">Projects</button><button id="navAgents">Agents</button></div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div class="row space"><div id="titleWrap" style="font-weight:650"></div><div class="row"><button id="themeBtn">🌙 Dark</button><button id="openSettings">⚙️ Settings</button><button id="quickCreate">+ Create (C)</button></div></div>
+      <div class="tabs" id="tabs"></div>
+      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
+    </div>
+    <section id="content" class="content"></section>
+  </main>
+</div>
+<div id="overlay" class="overlay"></div><aside id="detailPanel" class="panel"></aside><div id="toast" class="toast"></div>
+<script>
+(()=>{
+const KEY='mission_control_v3';
+const DEFAULT_GATEWAY='https://mc-api.austincaddell.dev';
+const DEFAULT_MODEL='openai-codex/gpt-5.3-codex';
+const FALLBACK_GATEWAYS=[DEFAULT_GATEWAY];
+const ITEM_STATUS=['Backlog','Todo','In Progress','In Review','Done','Cancelled'];
+const PRIORITY=['No priority','Low','Medium','High','Urgent'];
+const now=()=>new Date().toISOString(); const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const badgeStatus=s=>`<span class='badge'><span class='dot s-${String(s).toLowerCase().replace(/\s+/g,'-')}'></span>${esc(s)}</span>`;
+const toast=(m)=>{const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)};
+const el=id=>document.getElementById(id);
+
+const seed=()=>{
+ const a1={id:uid(),name:'Alex',avatar:'A',color:'#5e86ff',model:'gpt-5.3-codex',status:'Available'};
+ const a2={id:uid(),name:'Mira',avatar:'M',color:'#a66bff',model:'claude',status:'Busy'};
+ const p1={id:uid(),name:'Mission Control UI',icon:'🚀',status:'Active',priority:'High',description:'Execution layer integration'};
+ const t1={id:'demo-task',project_id:p1.id,title:'Wire execution layer',description:'Connect runs to backend + SSE',status:'Todo',priority:'High',assigned_agent_id:a1.id,due_date:null,labels:['execution'],activity:[{at:now(),text:'Seed task'}]};
+ const t2={id:uid(),project_id:p1.id,title:'Refine mobile UX',description:'Polish responsive details',status:'In Progress',priority:'Medium',assigned_agent_id:a2.id,due_date:null,labels:['mobile'],activity:[{at:now(),text:'Seed task'}]};
+ return {version:3,theme:'dark',nav:'projects',selectedProjectId:p1.id,selectedTab:'Tasks',itemView:'list',sort:{key:'priority',dir:'desc'},filters:{search:'',status:'All',priority:'All',agent:'All'},projects:[p1],tasks:[t1,t2],issues:[],agents:[a1,a2],settings:{gatewayUrl:DEFAULT_GATEWAY,authToken:'',defaultModel:DEFAULT_MODEL,autoTodoToInProgress:true,autoDoneOnSuccess:true},runCache:{},activity:[]};
+};
+let state=(()=>{try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch{return seed()}})();
+if(!state.version||state.version<3) state=seed();
+state.settings=state.settings||{};
+if(!state.settings.gatewayUrl||/localhost:8787|tail147c60\.ts\.net/.test(String(state.settings.gatewayUrl))){state.settings.gatewayUrl=DEFAULT_GATEWAY;}
+if(!state.settings.defaultModel||state.settings.defaultModel==='anthropic/claude-haiku-4-5'){state.settings.defaultModel=DEFAULT_MODEL;}
+const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+save();
+
+const api={
+ async req(path,opt={}){const r=await fetch((state.settings.gatewayUrl||'').replace(/\/$/,'')+path,{...opt,headers:{'Content-Type':'application/json',...(state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{})}});if(!r.ok)throw new Error(await r.text());return r.json()},
+ dispatch(task,payload){return this.req(`/api/tasks/${task.id}/dispatch`,{method:'POST',body:JSON.stringify(payload)})},
+ cancel(runId){return this.req(`/api/runs/${runId}/cancel`,{method:'POST'})},
+ retry(runId,payload){return this.req(`/api/runs/${runId}/retry`,{method:'POST',body:JSON.stringify(payload||{})})},
+ runs(taskId){return this.req(`/api/tasks/${taskId}/runs`)},
+ run(runId){return this.req(`/api/runs/${runId}`)}
+};
+
+let lastProbeAt=0;
+async function probeGateway(){
+ const badge=el('connState');
+ const nowMs=Date.now();
+ if(nowMs-lastProbeAt<7000) return;
+ lastProbeAt=nowMs;
+ if(badge) badge.textContent='Backend: checking...';
+ const candidates=[state.settings.gatewayUrl,...FALLBACK_GATEWAYS].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+ for(const base of candidates){
+  try{
+   const r=await fetch(base.replace(/\/$/,'')+'/api/config',{headers:state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{}});
+   if(r.ok){
+    if(state.settings.gatewayUrl!==base){state.settings.gatewayUrl=base;save();toast('Gateway auto-updated');}
+    if(badge) badge.textContent='Backend: connected';
+    return true;
+   }
+  }catch{}
+ }
+ if(badge) badge.textContent='Backend: offline';
+ return false;
+}
+
+let runStream=null, runStreamCtx=null, runLastEventId=''; let runBackoff=800;
+let activityStream=null, activityLastEventId=''; let activityBackoff=1000;
+
+function connectRunStream(runId){
+ if(runStream) runStream.close(); if(!runId) return;
+ const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/runs/${runId}/stream`); if(runLastEventId) u.searchParams.set('lastEventId',runLastEventId);
+ runStream=new EventSource(u.toString()); runStreamCtx=runId;
+ runStream.addEventListener('run_event',e=>{runLastEventId=e.lastEventId||runLastEventId;const evt=JSON.parse(e.data);ingestRunEvent(evt,true)});
+ runStream.addEventListener('run_snapshot',e=>{const snap=JSON.parse(e.data);if(snap.run){state.runCache[snap.run.id]={...(state.runCache[snap.run.id]||{}),run:snap.run};save();if(panelActiveTaskId()) openTask(panelActiveTaskId());}});
+ runStream.onerror=()=>{runStream.close();setTimeout(()=>connectRunStream(runId),runBackoff);runBackoff=Math.min(runBackoff*1.8,12000)};
+ runStream.onopen=()=>runBackoff=800;
+}
+function connectActivity(){
+ if(activityStream) activityStream.close();
+ const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/activity/stream`); if(activityLastEventId) u.searchParams.set('lastEventId',activityLastEventId);
+ activityStream=new EventSource(u.toString());
+ activityStream.addEventListener('activity',e=>{activityLastEventId=e.lastEventId||activityLastEventId;const evt=JSON.parse(e.data);state.activity.unshift(evt);state.activity=state.activity.slice(0,80);save();if(state.selectedTab==='Overview') render();if(panelActiveTaskId()) openTask(panelActiveTaskId());});
+ activityStream.onerror=()=>{activityStream.close();setTimeout(connectActivity,activityBackoff);activityBackoff=Math.min(activityBackoff*1.8,15000)};
+ activityStream.onopen=()=>activityBackoff=1000;
+}
+
+function project(){return state.projects.find(p=>p.id===state.selectedProjectId)||state.projects[0]}
+function tasks(){const p=project();return state.tasks.filter(t=>t.project_id===p?.id)}
+function activeRunForTask(taskId){const all=Object.values(state.runCache).map(x=>x.run).filter(Boolean);return all.find(r=>r.task_id===taskId&&['queued','running'].includes(r.status))}
+function latestRunForTask(taskId){const all=Object.values(state.runCache).map(x=>x.run).filter(r=>r&&r.task_id===taskId);return all.sort((a,b)=>(b.started_at||'').localeCompare(a.started_at||''))[0]||null}
+function latestFailureSummary(run,events){
+ if(!run) return '';
+ if(run.failure_summary) return run.failure_summary;
+ const arr=(events||[]).slice();
+ const lastError=[...arr].reverse().find(e=>e.type==='error'&&e.payload?.message);
+ const lastStderr=[...arr].reverse().find(e=>e.type==='stdout'&&e.payload?.stream==='stderr'&&e.payload?.line);
+ const lastStdout=[...arr].reverse().find(e=>e.type==='stdout'&&e.payload?.stream==='stdout'&&e.payload?.line);
+ return (lastError?.payload?.message||lastStderr?.payload?.line||lastStdout?.payload?.line||run.error||'').split(/\r?\n/)[0].slice(0,140);
+}
+function rawFailureLogs(events){
+ return (events||[]).filter(e=>e.type==='error'||(e.type==='stdout'&&(e.payload?.stream==='stderr'||e.payload?.stream==='stdout'))).slice(-30);
+}
+
+function render(){
+ renderSidebar(); renderTop();
+ if(state.nav==='agents') return renderAgents();
+ if(state.selectedTab==='Settings') return renderSettings();
+ if(state.selectedTab==='Overview') return renderOverview();
+ renderItems(state.selectedTab==='Issues'?'issues':'tasks');
+}
+function renderSidebar(){el('projectList').innerHTML=state.projects.map(p=>`<div class='project-item ${p.id===state.selectedProjectId?'active':''}' data-pid='${p.id}'><div>${esc(p.icon||'📁')} ${esc(p.name)}</div><div class='muted' style='font-size:11px'>${esc(p.status||'Planned')}</div></div>`).join('')}
+function renderTop(){el('titleWrap').textContent=state.nav==='agents'?'Agents':`${project()?.icon||'📁'} ${project()?.name||''}`;el('tabs').innerHTML=state.nav==='agents'?'':['Tasks','Issues','Overview','Settings'].map(t=>`<button class='tab ${state.selectedTab===t?'active':''}' data-tab='${t}'>${t}</button>`).join('');document.body.classList.toggle('light',state.theme!=='dark');el('themeBtn').textContent=state.theme==='dark'?'🌙 Dark':'☀️ Light';fillFilters();bindTop();probeGateway();}
+function fillFilters(){el('fStatus').innerHTML=['All',...ITEM_STATUS].map(x=>`<option ${state.filters.status===x?'selected':''}>${x}</option>`).join('');el('fPriority').innerHTML=['All',...PRIORITY].map(x=>`<option ${state.filters.priority===x?'selected':''}>${x}</option>`).join('');el('fAgent').innerHTML=`<option value='All'>All</option>`+state.agents.map(a=>`<option value='${a.id}' ${state.filters.agent===a.id?'selected':''}>${esc(a.name)}</option>`).join('');el('search').value=state.filters.search}
+
+function filteredRows(kind){
+ let rows=(kind==='tasks'?tasks():[]).slice();
+ return rows.filter(r=>{if(state.filters.search&&!`${r.title} ${r.description} ${(r.labels||[]).join(' ')}`.toLowerCase().includes(state.filters.search.toLowerCase())) return false; if(state.filters.status!=='All'&&r.status!==state.filters.status) return false; if(state.filters.priority!=='All'&&r.priority!==state.filters.priority) return false; if(state.filters.agent!=='All'&&r.assigned_agent_id!==state.filters.agent) return false; return true;});
+}
+
+function renderItems(kind){
+ const rows=filteredRows(kind);
+ const done=rows.filter(t=>t.status==='Done').length; const active=rows.filter(t=>t.status==='In Progress').length;
+ el('content').innerHTML=`<div class='stats'><div class='stat card'><div class='muted'>Tasks</div><div class='v'>${rows.length}</div></div><div class='stat card'><div class='muted'>Done</div><div class='v'>${done}</div></div><div class='stat card'><div class='muted'>In Progress</div><div class='v'>${active}</div></div><div class='stat card'><div class='muted'>Active Runs</div><div class='v'>${rows.filter(r=>activeRunForTask(r.id)).length}</div></div></div>
+  <div class='card'><table><thead><tr><th>Priority</th><th>Title</th><th>Status</th><th>Run</th><th>Agent</th></tr></thead><tbody>
+  ${rows.map(r=>{const a=state.agents.find(x=>x.id===r.assigned_agent_id);const run=latestRunForTask(r.id);const ev=run?(state.runCache[run.id]?.events||[]):[];const fail=(run&&run.status==='failed')?latestFailureSummary(run,ev):'';return `<tr data-open='${r.id}'><td>${esc(r.priority)}</td><td><strong>${esc(r.title)}</strong>${fail?`<div class='muted' style='font-size:11px;margin-top:4px'>⚠ ${esc(fail)}</div>`:''}</td><td>${badgeStatus(r.status)}</td><td>${run?badgeStatus(run.status):'<span class="muted">—</span>'}</td><td>${a?esc(a.name):'<span class="muted">Unassigned</span>'}</td></tr>`}).join('')||`<tr><td colspan='5' class='muted'>No tasks</td></tr>`}
+  </tbody></table></div>`;
+ el('content').querySelectorAll('[data-open]').forEach(n=>n.onclick=()=>openTask(n.dataset.open));
+}
+
+function renderOverview(){
+ const feed=(state.activity||[]).slice(0,40);
+ el('content').innerHTML=`<div class='card' style='padding:12px;margin-bottom:10px'><strong>Global Activity Feed</strong><div class='muted' style='margin:4px 0 8px'>Streaming from /api/activity/stream</div><div class='activity-feed'>${feed.map(e=>`<div class='card' style='padding:8px'><div class='row space'><span class='event-pill'>${esc(e.type)}</span><span class='muted' style='font-size:11px'>${new Date(e.timestamp).toLocaleTimeString()}</span></div><div style='font-size:12px;margin-top:4px'>run ${esc(e.run_id)}</div></div>`).join('')||'<div class="muted">No activity yet.</div>'}</div></div>`;
+}
+
+function renderSettings(){
+ const s=state.settings;
+ el('content').innerHTML=`<div class='card' style='padding:12px;display:grid;gap:8px;max-width:720px'>
+ <strong>Execution Settings</strong>
+ <label>Gateway URL <input id='setGateway' value='${esc(s.gatewayUrl)}'></label>
+ <label>Auth Token <input id='setToken' value='${esc(s.authToken)}' placeholder='Optional'></label>
+ <label>Default Model <input id='setModel' value='${esc(s.defaultModel)}'></label>
+ <label><input id='setTodo' type='checkbox' ${s.autoTodoToInProgress?'checked':''}> Auto transition Todo → In Progress on dispatch</label>
+ <label><input id='setDone' type='checkbox' ${s.autoDoneOnSuccess?'checked':''}> Auto transition task → Done on run success</label>
+ <div class='row'><button class='btn' id='saveSettings'>Save settings</button><button id='testBackend'>Test backend</button><button id='resetSettings'>Reset config</button></div>
+ <div id='settingsStatus' class='muted'></div>
+ </div>`;
+ el('saveSettings').onclick=()=>{state.settings.gatewayUrl=el('setGateway').value.trim()||DEFAULT_GATEWAY;state.settings.authToken=el('setToken').value.trim();state.settings.defaultModel=el('setModel').value.trim()||DEFAULT_MODEL;state.settings.autoTodoToInProgress=el('setTodo').checked;state.settings.autoDoneOnSuccess=el('setDone').checked;save();toast('Settings saved');connectActivity();probeGateway();};
+ el('testBackend').onclick=async()=>{try{const cfg=await api.req('/api/config');el('settingsStatus').textContent=`Connected. default_model=${cfg.default_model}`;}catch(err){el('settingsStatus').textContent='Backend not reachable: '+err.message;}};
+ el('resetSettings').onclick=()=>{state.settings.gatewayUrl=DEFAULT_GATEWAY;state.settings.authToken='';state.settings.defaultModel=DEFAULT_MODEL;state.settings.autoTodoToInProgress=true;state.settings.autoDoneOnSuccess=true;save();toast('Reset to defaults');render();};
+}
+
+function renderAgents(){
+ const rows=state.agents;
+ el('content').innerHTML=`<div class='card'><table><thead><tr><th>Agent</th><th>Status</th><th>Active Run</th><th>Recent Success</th></tr></thead><tbody>${rows.map(a=>{const runs=Object.values(state.runCache).map(v=>v.run).filter(r=>r&&r.agent_id===a.id).slice(0,12);const active=runs.find(r=>['queued','running'].includes(r.status));const finished=runs.filter(r=>['success','failed','cancelled'].includes(r.status));const pct=finished.length?Math.round((finished.filter(r=>r.status==='success').length/finished.length)*100):0;return `<tr><td>${esc(a.name)}</td><td>${esc(a.status)} ${active?'<span class="event-pill">busy</span>':''}</td><td>${active?esc(active.id):'<span class="muted">—</span>'}</td><td>${pct}%</td></tr>`}).join('')}</tbody></table></div>`;
+}
+
+async function openTask(id){
+ const task=state.tasks.find(t=>t.id===id); if(!task) return;
+ let runs=[]; try{runs=(await api.runs(id)).runs||[];runs.forEach(r=>state.runCache[r.id]={run:{...(state.runCache[r.id]?.run||{}),...r},events:state.runCache[r.id]?.events||[]});save();}catch{}
+ const latest=runs[0]||latestRunForTask(id);
+ const cache=latest?state.runCache[latest.id]||{}:{};
+ el('detailPanel').innerHTML=`<div class='row space'><strong>Task Detail</strong><button id='closePanel'>Close</button></div>
+ <input id='dTitle' value='${esc(task.title)}' style='width:100%;margin-top:8px'>
+ <div class='row' style='margin-top:8px'><select id='dStatus'>${ITEM_STATUS.map(s=>`<option ${task.status===s?'selected':''}>${s}</option>`).join('')}</select><select id='dPriority'>${PRIORITY.map(p=>`<option ${task.priority===p?'selected':''}>${p}</option>`).join('')}</select></div>
+ <textarea id='dDesc' style='width:100%;margin-top:8px'>${esc(task.description||'')}</textarea>
+ <div class='row space' style='margin-top:8px'><div class='row'><button class='btn' id='runTaskBtn'>Run Task (R)</button><button id='cancelRunBtn' ${!latest||!['queued','running'].includes(latest.status)?'disabled':''}>Cancel</button><button id='retryRunBtn' ${!latest?'disabled':''}>Retry</button></div><button id='saveTaskBtn'>Save</button></div>
+ <div style='margin-top:10px'><strong>Runs</strong><div class='card' style='padding:8px;margin-top:6px;max-height:170px;overflow:auto'>${runs.map(r=>`<div style='padding:6px 0;border-bottom:1px solid var(--line)'><div class='row space'><span>${badgeStatus(r.status)} <span class='muted'>${new Date(r.started_at).toLocaleTimeString()}</span></span><button data-pick-run='${r.id}'>View</button></div>${r.status==='failed'&&r.failure_summary?`<div class='muted' style='font-size:11px;margin-top:4px'>⚠ ${esc(r.failure_summary)}</div>`:''}</div>`).join('')||'<div class="muted">No runs yet</div>'}</div></div>
+ <div style='margin-top:10px'><strong>Live Run Panel</strong><div class='muted' style='font-size:12px'>${latest?`Run ${latest.id}`:'Dispatch to begin'}</div>${latest&&latest.status==='failed'?`<div class='card' style='padding:8px;margin:6px 0'><div><strong>Failure summary</strong></div><div style='font-size:12px;margin-top:4px'>${esc(latestFailureSummary(latest,cache.events||[]))||'<span class="muted">No summary available</span>'}</div><details style='margin-top:6px'><summary style='cursor:pointer'>Raw failure logs</summary><div class='run-events' style='margin-top:6px'>${renderEvents(rawFailureLogs(cache.events||[]))}</div></details></div>`:''}<div id='runEvents' class='run-events'>${renderEvents(cache.events||[])}</div></div>`;
+ el('detailPanel').dataset.taskId=id;
+ el('detailPanel').classList.add('open'); el('overlay').classList.add('show');
+ if(latest) connectRun(latest.id);
+ bindTaskPanel(task,latest);
+}
+function renderEvents(events){return (events||[]).slice(-80).map(e=>`<div><span class='muted'>${new Date(e.timestamp).toLocaleTimeString()}</span> <span class='event-pill'>${esc(e.type)}</span> ${esc(JSON.stringify(e.payload||{}))}</div>`).join('')||'<span class="muted">No events</span>'}
+
+function bindTaskPanel(task,latest){
+ el('closePanel').onclick=closePanel;
+ el('saveTaskBtn').onclick=()=>{task.title=el('dTitle').value.trim()||task.title;task.status=el('dStatus').value;task.priority=el('dPriority').value;task.description=el('dDesc').value;task.activity=task.activity||[];task.activity.push({at:now(),text:'Task updated'});save();render();toast('Saved');openTask(task.id)};
+ el('runTaskBtn').onclick=()=>dispatchTask(task);
+ el('cancelRunBtn').onclick=async()=>{if(!latest) return;try{await api.cancel(latest.id);toast('Run cancelled');await refreshTaskRuns(task.id);}catch(err){toast('Cancel failed')}};
+ el('retryRunBtn').onclick=async()=>{if(!latest) return;try{const out=await api.retry(latest.id,{model:state.settings.defaultModel,agent_id:task.assigned_agent_id});toast('Retry queued');await refreshTaskRuns(task.id);connectRun(out.run.id);}catch(err){toast('Retry failed')}};
+ document.querySelectorAll('[data-pick-run]').forEach(b=>b.onclick=()=>connectRun(b.dataset.pickRun));
+}
+
+async function dispatchTask(task){
+ try{
+  if(state.settings.autoTodoToInProgress&&task.status==='Todo') task.status='In Progress';
+  const project=project();
+  const agent=state.agents.find(a=>a.id===task.assigned_agent_id)||null;
+  const related_tasks=state.tasks.filter(t=>t.project_id===task.project_id&&t.id!==task.id).slice(0,4);
+  const out=await api.dispatch(task,{task,project,agent,related_tasks,related_issues:[],model:state.settings.defaultModel,agent_id:task.assigned_agent_id});
+  state.runCache[out.run.id]={run:out.run,events:[]}; save(); toast('Run dispatched'); render(); openTask(task.id); connectRun(out.run.id);
+ }catch(err){toast('Dispatch failed (maybe already active)');}
+}
+
+async function refreshTaskRuns(taskId){try{const rr=await api.runs(taskId);rr.runs.forEach(r=>state.runCache[r.id]={run:{...(state.runCache[r.id]?.run||{}),...r},events:state.runCache[r.id]?.events||[]});save();render();if(panelActiveTaskId()===taskId) openTask(taskId)}catch{}}
+function panelActiveTaskId(){return el('detailPanel').dataset.taskId||null}
+function closePanel(){el('detailPanel').classList.remove('open');el('overlay').classList.remove('show');el('detailPanel').innerHTML='';el('detailPanel').dataset.taskId='';if(runStream){runStream.close();runStream=null;}}
+
+function ingestRunEvent(evt,rerender){
+ const bucket=state.runCache[evt.run_id]||(state.runCache[evt.run_id]={run:{id:evt.run_id,status:'running'},events:[]});
+ bucket.events=bucket.events||[]; bucket.events.push(evt);
+ if(evt.type==='error'&&evt.payload?.message){bucket.run.failure_summary=(String(evt.payload.message).split(/\r?\n/)[0]||'').slice(0,220);}
+ if(evt.type==='stdout'&&evt.payload?.stream==='stderr'&&evt.payload?.line&&!bucket.run.failure_summary){bucket.run.failure_summary=(String(evt.payload.line).split(/\r?\n/)[0]||'').slice(0,220);}
+ if(evt.type==='status'&&evt.payload?.status){bucket.run.status=evt.payload.status; if(evt.payload.status==='success'){bucket.run.ended_at=now(); if(state.settings.autoDoneOnSuccess){const t=state.tasks.find(x=>x.id===bucket.run.task_id); if(t) t.status='Done';}} if(['failed','cancelled'].includes(evt.payload.status)) bucket.run.ended_at=now();}
+ save();
+ if(rerender&&panelActiveTaskId()){
+  const runEvents=el('runEvents'); if(runEvents&&runStreamCtx===evt.run_id) runEvents.innerHTML=renderEvents(bucket.events);
+  render();
+ }
+}
+function connectRun(runId){runLastEventId='';connectRunStream(runId);runStreamCtx=runId;}
+
+function bindTop(){
+ el('projectList').querySelectorAll('[data-pid]').forEach(n=>n.onclick=()=>{state.selectedProjectId=n.dataset.pid;state.nav='projects';save();render()});
+ el('tabs').querySelectorAll('[data-tab]').forEach(n=>n.onclick=()=>{state.selectedTab=n.dataset.tab;save();render()});
+ ['search','fStatus','fPriority','fAgent'].forEach(id=>el(id).oninput=()=>{state.filters.search=el('search').value;state.filters.status=el('fStatus').value;state.filters.priority=el('fPriority').value;state.filters.agent=el('fAgent').value;save();render()});
+ el('themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';save();render()};
+ el('openSettings').onclick=()=>{state.nav='projects';state.selectedTab='Settings';save();render()};
+ el('newProjectBtn').onclick=()=>{const n=prompt('Project name?');if(!n)return;const p={id:uid(),name:n,icon:'📁',status:'Planned',priority:'No priority'};state.projects.unshift(p);state.selectedProjectId=p.id;save();render()};
+ el('quickCreate').onclick=()=>{const p=project();if(!p)return;const t={id:uid(),project_id:p.id,title:'New Task',description:'',status:'Todo',priority:'No priority',assigned_agent_id:null,due_date:null,labels:[],activity:[{at:now(),text:'Created'}]};state.tasks.unshift(t);save();render();openTask(t.id)};
+ el('navProjects').onclick=()=>{state.nav='projects';save();render()}; el('navAgents').onclick=()=>{state.nav='agents';save();render()};
+ el('toggleView').onclick=()=>toast('Board view kept lightweight in this pass');
+}
+
+document.addEventListener('click',e=>{
+ const btn=e.target&&e.target.closest&&e.target.closest('#openSettings');
+ if(!btn) return;
+ state.nav='projects';
+ state.selectedTab='Settings';
+ save();
+ render();
+});
+
+document.addEventListener('keydown',e=>{
+ const typing=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+ if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();toast('Command palette shortcut reserved');}
+ if(typing) return;
+ if(e.key.toLowerCase()==='c'){e.preventDefault();el('quickCreate').click();}
+ if(e.key.toLowerCase()==='r'){e.preventDefault();const id=panelActiveTaskId();if(id){const t=state.tasks.find(x=>x.id===id);if(t) dispatchTask(t);}}
+ if(e.key==='Escape') closePanel();
+});
+el('overlay').onclick=closePanel;
+
+(async()=>{connectActivity();render();})();
+})();
+</script>
+</body>
+</html>
