@@ -44,6 +44,30 @@ function parseTime(value) {
   return Number.isFinite(t) ? t : null;
 }
 
+function readOptionalTextFile(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const text = fs.readFileSync(filePath, 'utf8').trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
+function getBuildMetadata() {
+  const gitSha =
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_SHA ||
+    readOptionalTextFile(path.join(__dirname, '.git-sha')) ||
+    'unknown';
+  const buildAt =
+    process.env.RENDER_BUILD_TIMESTAMP ||
+    process.env.BUILD_AT ||
+    readOptionalTextFile(path.join(__dirname, '.build-at')) ||
+    null;
+  return { git_sha: gitSha, build_at: buildAt };
+}
+
 function isTerminalStatus(status) {
   return ['success', 'failed', 'cancelled'].includes(status);
 }
@@ -285,9 +309,24 @@ function chooseClaimableRun(db, now = nowMs()) {
     || null;
 }
 
-function finalizeRun(db, runId, status, details = {}) {
+function finalizeRunOnce(db, runId, status, details = {}) {
   const run = getRun(db, runId);
   if (!run) return null;
+
+  if (!isTerminalStatus(status)) {
+    const err = new Error('terminal status must be success, failed, or cancelled');
+    err.status = 400;
+    err.code = 'invalid_terminal_status';
+    throw err;
+  }
+
+  if (isTerminalStatus(run.status)) {
+    const err = new Error(`run already finalized as ${run.status}`);
+    err.status = 409;
+    err.code = 'run_terminal_conflict';
+    err.run_status = run.status;
+    throw err;
+  }
 
   const patch = {
     status,
@@ -337,7 +376,7 @@ function applyWorkerEvent(db, run, event) {
         heartbeat_at: iso()
       });
     } else if (nextStatus === 'success' || nextStatus === 'failed' || nextStatus === 'cancelled') {
-      finalizeRun(db, run.id, nextStatus, {
+      finalizeRunOnce(db, run.id, nextStatus, {
         error: payload.error || null,
         result: payload.result || null,
         worker_id: run.worker_id || event.worker_id || run.worker_id,
@@ -437,12 +476,15 @@ const requireApiAuth = authGuard(API_TOKEN, 'API');
 const requireWorkerAuth = authGuard(WORKER_TOKEN, 'worker');
 
 app.get('/api/config', (req, res) => {
+  const build = getBuildMetadata();
   res.json({
     gateway_url: 'worker-protocol',
     auth_token_present: Boolean(API_TOKEN),
     worker_token_present: Boolean(WORKER_TOKEN),
     execution_mode: 'worker-protocol',
     default_model: DEFAULT_MODEL,
+    git_sha: build.git_sha,
+    build_at: build.build_at,
     toggles: {
       auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS,
       auto_transition_done: AUTO_TRANSITION_DONE
@@ -452,6 +494,15 @@ app.get('/api/config', (req, res) => {
       heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS,
       heartbeat_ttl_ms: WORKER_HEARTBEAT_TTL_MS
     }
+  });
+});
+
+app.get('/api/version', (req, res) => {
+  const build = getBuildMetadata();
+  res.json({
+    service: 'mission-control',
+    git_sha: build.git_sha,
+    build_at: build.build_at
   });
 });
 
@@ -572,6 +623,31 @@ app.get('/api/runs/:run_id', requireApiAuth, (req, res) => {
   res.json({ run: compactRun(run, events), events });
 });
 
+app.get('/api/runs/:run_id/events', requireApiAuth, (req, res) => {
+  const db = readDb();
+  const run = getRun(db, req.params.run_id);
+  if (!run) return res.status(404).json({ error: 'Run not found' });
+
+  const allEvents = getEventsForRun(db, run.id);
+  const since = req.query.since ? String(req.query.since) : null;
+  const limitRaw = Number.parseInt(String(req.query.limit || '500'), 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 1000) : 500;
+
+  let events = allEvents;
+  if (since) {
+    const idx = allEvents.findIndex(evt => evt.id === since);
+    events = idx >= 0 ? allEvents.slice(idx + 1) : allEvents;
+  }
+
+  res.json({
+    run: compactRun(run, allEvents),
+    events: events.slice(-limit),
+    total_events: allEvents.length,
+    limit,
+    since
+  });
+});
+
 app.get('/api/tasks/:id/runs', requireApiAuth, (req, res) => {
   const db = readDb();
   const runs = db.runs
@@ -652,7 +728,9 @@ app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
       last_claim_at: null,
       current_run_id: null,
       host: req.body?.host || null,
-      pid: req.body?.pid || null
+      pid: req.body?.pid || null,
+      healthy: typeof req.body?.healthy === 'boolean' ? req.body.healthy : true,
+      health_reason: req.body?.health_reason || null
     });
     return res.status(204).end();
   }
@@ -704,9 +782,17 @@ app.post('/api/worker/runs/:run_id/events', requireWorkerAuth, (req, res) => {
       : [{ type: req.body?.type, payload: req.body?.payload, level: req.body?.level }];
 
   const accepted = [];
-  for (const evt of events) {
-    if (!evt || !evt.type) continue;
-    accepted.push(applyWorkerEvent(db, getRun(db, run.id), { ...evt, worker_id: workerId || run.worker_id || null }));
+  try {
+    for (const evt of events) {
+      if (!evt || !evt.type) continue;
+      accepted.push(applyWorkerEvent(db, getRun(db, run.id), { ...evt, worker_id: workerId || run.worker_id || null }));
+    }
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      error: err.message || 'Worker event rejected',
+      code: err.code || 'worker_event_rejected',
+      run_status: err.run_status || null
+    });
   }
 
   updateRun(db, run.id, { heartbeat_at: iso() });
@@ -746,13 +832,21 @@ app.post('/api/worker/runs/:run_id/complete', requireWorkerAuth, (req, res) => {
   if (result !== null) updateRun(db, run.id, { result });
   if (finalStatus === 'failed' || error) updateRun(db, run.id, { error: error || run.error || null, failure_summary: summary || error || run.failure_summary || null });
 
-  finalizeRun(db, run.id, finalStatus, {
-    error: finalStatus === 'failed' ? (error || summary || 'Worker reported failure') : null,
-    result,
-    worker_id: workerId || run.worker_id || null,
-    heartbeat_at: iso(),
-    failure_summary: summary || error || null
-  });
+  try {
+    finalizeRunOnce(db, run.id, finalStatus, {
+      error: finalStatus === 'failed' ? (error || summary || 'Worker reported failure') : null,
+      result,
+      worker_id: workerId || run.worker_id || null,
+      heartbeat_at: iso(),
+      failure_summary: summary || error || null
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      error: err.message || 'Run completion rejected',
+      code: err.code || 'run_completion_rejected',
+      run_status: err.run_status || null
+    });
+  }
 
   addEvent(db, run.id, 'status', { status: finalStatus, worker_id: workerId || run.worker_id || null }, finalStatus === 'success' ? 'info' : 'warn');
   if (result !== null) {
@@ -790,7 +884,9 @@ app.post('/api/worker/heartbeat', requireWorkerAuth, (req, res) => {
     last_seen_at: heartbeatAt,
     current_run_id: currentRunId,
     host,
-    pid
+    pid,
+    healthy: typeof req.body?.healthy === 'boolean' ? req.body.healthy : true,
+    health_reason: req.body?.health_reason || null
   });
 
   const cancelled_run_ids = listCancelledRunsForWorker(db, workerId);

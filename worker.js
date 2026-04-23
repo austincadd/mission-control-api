@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import os from 'os';
-import { spawn } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import readline from 'readline';
 
 const BASE_URL = (process.env.MISSION_CONTROL_URL || 'http://127.0.0.1:8787').replace(/\/$/, '');
@@ -8,6 +8,7 @@ const TOKEN = process.env.MISSION_CONTROL_WORKER_TOKEN || process.env.MISSION_CO
 const WORKER_ID = process.env.WORKER_ID || `worker-${os.hostname()}-${process.pid}`;
 const OPENCLAW_BIN = process.env.OPENCLAW_BIN || 'openclaw';
 const OPENCLAW_CHANNEL = process.env.OPENCLAW_AGENT_CHANNEL || '';
+const OPENCLAW_DEFAULT_AGENT = process.env.OPENCLAW_DEFAULT_AGENT || 'guy';
 const CLAIM_SLEEP_MS = Number(process.env.WORKER_CLAIM_SLEEP_MS || 2000);
 const HEARTBEAT_INTERVAL_MS = Number(process.env.WORKER_HEARTBEAT_INTERVAL_MS || 15_000);
 
@@ -18,6 +19,8 @@ let shuttingDown = false;
 let heartbeatTimer = null;
 let stdoutTail = [];
 let stderrTail = [];
+let workerReady = false;
+let workerUnhealthyReason = null;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -43,9 +46,40 @@ function tailPush(arr, line, max = 200) {
   while (arr.length > max) arr.shift();
 }
 
+function describeOpenClawCommand(run, workerMessage) {
+  return `${OPENCLAW_BIN} ${buildOpenClawArgs(run, workerMessage).map(a => JSON.stringify(a)).join(' ')}`;
+}
+
+function probeStep(args, label) {
+  const result = spawnSync(OPENCLAW_BIN, args, {
+    encoding: 'utf8',
+    env: process.env,
+    timeout: Number(process.env.WORKER_STARTUP_PROBE_TIMEOUT_MS || 15_000)
+  });
+  if (result.error) {
+    return { ok: false, reason: `${label} error: ${result.error.message}` };
+  }
+  if (result.status !== 0) {
+    const stderr = String(result.stderr || '').trim();
+    const stdout = String(result.stdout || '').trim();
+    return { ok: false, reason: `${label} exited ${result.status}${stderr ? ` stderr=${stderr}` : ''}${stdout ? ` stdout=${stdout}` : ''}` };
+  }
+  return { ok: true, stdout: String(result.stdout || '').trim(), stderr: String(result.stderr || '').trim() };
+}
+
+async function probeOpenClaw() {
+  const versionProbe = probeStep(['--version'], 'openclaw --version');
+  if (!versionProbe.ok) return versionProbe;
+
+  const helpProbe = probeStep(['agent', '--help'], 'openclaw agent --help');
+  if (!helpProbe.ok) return helpProbe;
+
+  return { ok: true, reason: null, details: { version: versionProbe.stdout, help: helpProbe.stdout } };
+}
+
 function buildOpenClawArgs(run, workerMessage) {
   const args = ['agent', '--json', '--message', workerMessage];
-  if (run.agent_id) args.push('--agent', run.agent_id);
+  args.push('--agent', run.agent_id || OPENCLAW_DEFAULT_AGENT);
   if (OPENCLAW_CHANNEL) args.push('--channel', OPENCLAW_CHANNEL);
   return args;
 }
@@ -90,7 +124,9 @@ async function heartbeat() {
         worker_id: WORKER_ID,
         current_run_id: currentRun?.id || null,
         host: os.hostname(),
-        pid: process.pid
+        pid: process.pid,
+        healthy: workerReady,
+        health_reason: workerReady ? null : workerUnhealthyReason
       })
     });
     if (!response.ok) return;
@@ -110,6 +146,7 @@ async function heartbeat() {
 }
 
 async function claimOne() {
+  if (!workerReady) return null;
   const response = await api('/api/worker/claim', {
     method: 'POST',
     body: JSON.stringify({
@@ -136,7 +173,7 @@ async function runClaimed(job) {
 
   const workerMessage = job.worker_message || currentRun.worker_message;
   const args = job.openclaw_args || buildOpenClawArgs(currentRun, workerMessage);
-  const commandPreview = `${OPENCLAW_BIN} ${args.map(a => JSON.stringify(a)).join(' ')}`;
+  const commandPreview = describeOpenClawCommand(currentRun, workerMessage);
   console.log(`[worker] claimed ${currentRun.id}: ${commandPreview}`);
 
   await postEvent(currentRun.id, {
@@ -248,10 +285,23 @@ async function runClaimed(job) {
 
 async function main() {
   console.log(`[worker] starting ${WORKER_ID} -> ${BASE_URL}`);
+  const probe = await probeOpenClaw();
+  workerReady = Boolean(probe.ok);
+  workerUnhealthyReason = probe.ok ? null : probe.reason || 'openclaw_probe_failed';
+  if (workerReady) {
+    console.log(`[worker] openclaw probe ok: ${probe.details?.version || 'version ok'}`);
+  } else {
+    console.error(`[worker] unhealthy: ${workerUnhealthyReason}`);
+  }
+
   await heartbeat();
   heartbeatTimer = setInterval(() => void heartbeat(), HEARTBEAT_INTERVAL_MS);
 
   while (!shuttingDown) {
+    if (!workerReady) {
+      await sleep(CLAIM_SLEEP_MS);
+      continue;
+    }
     if (currentRun) {
       await sleep(1000);
       continue;

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "worker": "node worker.js"
+    "worker": "node worker.js",
+    "smoke": "bash scripts/e2e-smoke.sh"
   },
   "dependencies": {
     "cors": "^2.8.5",

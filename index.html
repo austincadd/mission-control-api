@@ -18,6 +18,7 @@
     table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted);cursor:pointer}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}.dot{width:8px;height:8px;border-radius:50%}
     .s-backlog,.s-todo{background:#8492a6}.s-in-progress,.s-running,.s-queued{background:var(--accent)}.s-in-review,.s-degraded-success{background:var(--warn)}.s-done,.s-success{background:var(--ok)}.s-cancelled,.s-failed{background:var(--danger)}
+    .conn-online{color:var(--ok)} .conn-degraded{color:var(--warn)} .conn-unreachable{color:var(--danger)}
     .panel{position:fixed;right:-640px;top:0;height:100vh;width:min(640px,100vw);background:var(--panel);border-left:1px solid var(--line);transition:.2s;padding:12px;overflow:auto;z-index:9}.panel.open{right:0}
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.2s;z-index:8}.overlay.show{opacity:1;pointer-events:auto}
     .run-events{max-height:220px;overflow:auto;background:rgba(0,0,0,.15);border:1px solid var(--line);border-radius:10px;padding:8px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
@@ -39,7 +40,7 @@
     <div class="top">
       <div class="row space"><div id="titleWrap" style="font-weight:650"></div><div class="row"><button id="themeBtn">🌙 Dark</button><button id="openSettings">⚙️ Settings</button><button id="quickCreate">+ Create (C)</button></div></div>
       <div class="tabs" id="tabs"></div>
-      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
+      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><button id="resetReconnectBtn">Reset & Reconnect</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
     </div>
     <section id="content" class="content"></section>
   </main>
@@ -73,6 +74,14 @@ state.settings=state.settings||{};
 if(!state.settings.gatewayUrl||/localhost:8787|tail147c60\.ts\.net/.test(String(state.settings.gatewayUrl))){state.settings.gatewayUrl=DEFAULT_GATEWAY;}
 if(!state.settings.defaultModel||state.settings.defaultModel==='anthropic/claude-haiku-4-5'){state.settings.defaultModel=DEFAULT_MODEL;}
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+function setConnState(mode, detail=''){
+ const badge=el('connState');
+ if(!badge) return;
+ badge.classList.remove('conn-online','conn-degraded','conn-unreachable','muted');
+ badge.classList.add(`conn-${mode}`);
+ const base=mode==='online'?'Backend: online':mode==='degraded'?'Backend: degraded':'Backend: unreachable';
+ badge.textContent=detail?`${base} (${detail})`:base;
+}
 const gatewayCandidates=()=>{
  const primary=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
  return [primary,...FALLBACK_GATEWAYS.filter(Boolean)]
@@ -108,26 +117,92 @@ const api={
 };
 
 let lastProbeAt=0;
-async function probeGateway(){
+function unwrapProxyPayload(payload){
+ return payload&&typeof payload==='object'&&Object.prototype.hasOwnProperty.call(payload,'body')?payload.body:payload;
+}
+function workerHealthFromPayload(payload){
+ const workers=Array.isArray(payload?.workers)?payload.workers:[];
+ if(!workers.length) return {state:'degraded', detail:'no workers'};
+ const now=Date.now();
+ const fresh=workers.find(w=>{
+  const hb=Date.parse(w?.last_heartbeat_at||'');
+  if(!Number.isFinite(hb)) return false;
+  if(now-hb>90000) return false;
+  if(w?.healthy===false) return false;
+  return true;
+ });
+ if(fresh) return {state:'online', detail:`${fresh.id||'worker'} healthy`};
+ const unhealthy=workers.find(w=>w?.healthy===false);
+ if(unhealthy) return {state:'degraded', detail:`${unhealthy.id||'worker'} ${unhealthy.health_reason||'unhealthy'}`};
+ return {state:'degraded', detail:'worker stale'};
+}
+async function probeGateway(force=false){
  const badge=el('connState');
  const nowMs=Date.now();
- if(nowMs-lastProbeAt<7000) return;
+ if(!force&&nowMs-lastProbeAt<7000) return;
  lastProbeAt=nowMs;
- if(badge) badge.textContent='Backend: checking...';
+ setConnState('degraded','checking');
  const headers=state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{};
+ let backendReachable=false;
+ let workerAssessment=null;
+ let lastDetail='';
  for(const base of gatewayCandidates()){
+  const clean=base.replace(/\/$/,'');
+  const proxyBase=`/mission-control/health-proxy.php?target=${encodeURIComponent(clean)}`;
+  let configPayload=null;
   try{
-   const r=await fetch(base.replace(/\/$/,'')+'/api/config',{headers});
-   if(r.ok){
-    state.settings.gatewayUrl=base.replace(/\/$/,'');
-    save();
-    if(badge) badge.textContent=`Backend: connected (${new URL(base).hostname})`;
-    return true;
+   const proxied=await fetch(`${proxyBase}&path=config`,{headers:{'Accept':'application/json',...headers}});
+   if(proxied.ok){
+    const data=await proxied.json().catch(()=>null);
+    configPayload=unwrapProxyPayload(data);
+  }
+  }catch{}
+  if(!configPayload){
+   try{
+    const direct=await fetch(clean+'/api/config',{headers:{'Accept':'application/json',...headers}});
+    if(direct.ok){
+     configPayload=await direct.json().catch(()=>null);
+    } else {
+     lastDetail=`config ${direct.status}`;
+    }
+   }catch(err){
+    lastDetail=err.message;
+   }
+  }
+  if(!configPayload || configPayload.ok===false){
+   continue;
+  }
+  backendReachable=true;
+  state.settings.gatewayUrl=clean;
+  save();
+  let workerPayload=null;
+  try{
+   const proxiedWorkers=await fetch(`${proxyBase}&path=worker-status`,{headers:{'Accept':'application/json',...headers}});
+   if(proxiedWorkers.ok){
+    const data=await proxiedWorkers.json().catch(()=>null);
+    workerPayload=unwrapProxyPayload(data);
    }
   }catch{}
+  if(!workerPayload){
+   try{
+    const directWorkers=await fetch(clean+'/api/worker/status',{headers:{'Accept':'application/json',...headers}});
+    if(directWorkers.ok){
+     workerPayload=await directWorkers.json().catch(()=>null);
+    }
+   }catch{}
+  }
+  if(workerPayload && workerPayload.ok===false && workerPayload.body){
+   workerPayload=workerPayload.body;
+  }
+  workerAssessment=workerPayload?workerHealthFromPayload(workerPayload):{state:'degraded',detail:'worker status unavailable'};
+  break;
  }
- if(badge) badge.textContent='Backend: offline';
- return false;
+ if(!backendReachable){
+  setConnState('unreachable', lastDetail||'no backend');
+  return false;
+ }
+ setConnState(workerAssessment?.state||'degraded', workerAssessment?.detail||'');
+ return workerAssessment?.state==='online';
 }
 
 let runStream=null, runStreamCtx=null, runLastEventId=''; let runBackoff=800;
@@ -213,9 +288,9 @@ function renderSettings(){
  <div class='row'><button class='btn' id='saveSettings'>Save settings</button><button id='testBackend'>Test backend</button><button id='resetSettings'>Reset config</button></div>
  <div id='settingsStatus' class='muted'></div>
  </div>`;
- el('saveSettings').onclick=()=>{state.settings.gatewayUrl=el('setGateway').value.trim()||DEFAULT_GATEWAY;state.settings.authToken=el('setToken').value.trim();state.settings.defaultModel=el('setModel').value.trim()||DEFAULT_MODEL;state.settings.autoTodoToInProgress=el('setTodo').checked;state.settings.autoDoneOnSuccess=el('setDone').checked;save();toast('Settings saved');connectActivity();probeGateway();};
- el('testBackend').onclick=async()=>{try{const cfg=await api.req('/api/config');el('settingsStatus').textContent=`Connected. default_model=${cfg.default_model}`;probeGateway();}catch(err){el('settingsStatus').textContent='Backend not reachable: '+err.message;}};
- el('resetSettings').onclick=()=>{state.settings.gatewayUrl=DEFAULT_GATEWAY;state.settings.authToken='';state.settings.defaultModel=DEFAULT_MODEL;state.settings.autoTodoToInProgress=true;state.settings.autoDoneOnSuccess=true;save();toast('Reset to defaults');render();};
+ el('saveSettings').onclick=()=>{state.settings.gatewayUrl=el('setGateway').value.trim()||DEFAULT_GATEWAY;state.settings.authToken=el('setToken').value.trim();state.settings.defaultModel=el('setModel').value.trim()||DEFAULT_MODEL;state.settings.autoTodoToInProgress=el('setTodo').checked;state.settings.autoDoneOnSuccess=el('setDone').checked;save();toast('Settings saved');connectActivity();probeGateway(true);};
+ el('testBackend').onclick=async()=>{try{const cfg=await api.req('/api/config');el('settingsStatus').textContent=`Connected. default_model=${cfg.default_model}`;probeGateway(true);}catch(err){el('settingsStatus').textContent='Backend not reachable: '+err.message;}};
+ el('resetSettings').onclick=()=>{state.settings.gatewayUrl=DEFAULT_GATEWAY;state.settings.authToken='';state.settings.defaultModel=DEFAULT_MODEL;state.settings.autoTodoToInProgress=true;state.settings.autoDoneOnSuccess=true;save();toast('Reset to defaults');render();probeGateway(true);};
 }
 
 function renderAgents(){
@@ -266,6 +341,28 @@ async function refreshTaskRuns(taskId){try{const rr=await api.runs(taskId);rr.ru
 function panelActiveTaskId(){return el('detailPanel').dataset.taskId||null}
 function closePanel(){el('detailPanel').classList.remove('open');el('overlay').classList.remove('show');el('detailPanel').innerHTML='';el('detailPanel').dataset.taskId='';if(runStream){runStream.close();runStream=null;}}
 
+function resetAndReconnect(){
+ const preservedTheme=state.theme;
+ try{localStorage.removeItem(KEY);}catch{}
+ state=seed();
+ state.theme=preservedTheme;
+ state.settings.gatewayUrl=DEFAULT_GATEWAY;
+ state.settings.authToken='';
+ state.settings.defaultModel=DEFAULT_MODEL;
+ state.settings.autoTodoToInProgress=true;
+ state.settings.autoDoneOnSuccess=true;
+ runLastEventId='';
+ activityLastEventId='';
+ lastProbeAt=0;
+ if(runStream){runStream.close();runStream=null;}
+ if(activityStream){activityStream.close();activityStream=null;}
+ save();
+ toast('State reset');
+ render();
+ connectActivity();
+ probeGateway(true);
+}
+
 function ingestRunEvent(evt,rerender){
  const bucket=state.runCache[evt.run_id]||(state.runCache[evt.run_id]={run:{id:evt.run_id,status:'running'},events:[]});
  bucket.events=bucket.events||[]; bucket.events.push(evt);
@@ -302,6 +399,7 @@ function bindTop(){
  el('quickCreate').onclick=()=>{const p=project();if(!p)return;const t={id:uid(),project_id:p.id,title:'New Task',description:'',status:'Todo',priority:'No priority',assigned_agent_id:null,due_date:null,labels:[],activity:[{at:now(),text:'Created'}]};state.tasks.unshift(t);save();render();openTask(t.id)};
  el('navProjects').onclick=()=>{state.nav='projects';save();render()}; el('navAgents').onclick=()=>{state.nav='agents';save();render()};
  el('toggleView').onclick=()=>toast('Board view kept lightweight in this pass');
+ el('resetReconnectBtn').onclick=resetAndReconnect;
 }
 
 document.addEventListener('click',e=>{
