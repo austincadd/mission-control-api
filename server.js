@@ -205,6 +205,8 @@ function compactRun(run, events = null) {
   };
 }
 
+const KNOWN_DISPATCH_AGENT_IDS = new Set(['guy', 'main', 'hermy']);
+
 function buildDispatchContext(body = {}) {
   return {
     task: body.task ?? null,
@@ -214,6 +216,28 @@ function buildDispatchContext(body = {}) {
     related_issues: Array.isArray(body.related_issues) ? body.related_issues : [],
     agent: body.agent || (body.agent_id ? { id: body.agent_id } : null)
   };
+}
+
+function extractRequestedAgentId(body = {}, fallback = null) {
+  const raw = body.agent_id ?? body?.agent?.id ?? body.agent ?? fallback;
+  if (raw === null || raw === undefined) return null;
+  const value = String(raw).trim();
+  return value || null;
+}
+
+function validateKnownDispatchAgentId(agentId) {
+  if (!agentId) return { ok: true, normalized: null };
+  const normalized = agentId.toLowerCase();
+  if (!KNOWN_DISPATCH_AGENT_IDS.has(normalized)) {
+    return {
+      ok: false,
+      status: 400,
+      code: 'unknown_agent',
+      error: `Unknown agent_id: ${agentId}`,
+      agent_id: agentId
+    };
+  }
+  return { ok: true, normalized };
 }
 
 function normalizeOpenClawAgentId(agentId) {
@@ -515,6 +539,16 @@ app.get('/api/version', (req, res) => {
 });
 
 app.post('/api/tasks/:id/dispatch', requireApiAuth, async (req, res) => {
+  const requestedAgentId = extractRequestedAgentId(req.body);
+  const agentValidation = validateKnownDispatchAgentId(requestedAgentId);
+  if (!agentValidation.ok) {
+    return res.status(agentValidation.status).json({
+      error: agentValidation.error,
+      code: agentValidation.code,
+      agent_id: agentValidation.agent_id
+    });
+  }
+
   const db = readDb();
   const taskId = req.params.id;
   const active = db.runs.find(r => r.task_id === taskId && !isTerminalStatus(r.status));
@@ -524,7 +558,7 @@ app.post('/api/tasks/:id/dispatch', requireApiAuth, async (req, res) => {
   const run = {
     id: uid('run_'),
     task_id: taskId,
-    agent_id: req.body.agent_id || req.body?.agent?.id || req.body.agent || null,
+    agent_id: requestedAgentId,
     status: 'queued',
     model: req.body.model || DEFAULT_MODEL,
     started_at: iso(),
@@ -583,6 +617,16 @@ app.post('/api/runs/:run_id/retry', requireApiAuth, async (req, res) => {
   const prev = getRun(db, req.params.run_id);
   if (!prev) return res.status(404).json({ error: 'Run not found' });
 
+  const requestedAgentId = extractRequestedAgentId(req.body, prev.agent_id);
+  const agentValidation = validateKnownDispatchAgentId(requestedAgentId);
+  if (!agentValidation.ok) {
+    return res.status(agentValidation.status).json({
+      error: agentValidation.error,
+      code: agentValidation.code,
+      agent_id: agentValidation.agent_id
+    });
+  }
+
   const active = db.runs.find(r => r.task_id === prev.task_id && !isTerminalStatus(r.status));
   if (active) return res.status(409).json({ error: 'Task already has an active run', active_run_id: active.id });
 
@@ -590,7 +634,7 @@ app.post('/api/runs/:run_id/retry', requireApiAuth, async (req, res) => {
   const run = {
     id: uid('run_'),
     task_id: prev.task_id,
-    agent_id: req.body.agent_id || req.body?.agent?.id || req.body.agent || prev.agent_id || null,
+    agent_id: requestedAgentId,
     status: 'queued',
     model: req.body.model || prev.model || DEFAULT_MODEL,
     started_at: iso(),
