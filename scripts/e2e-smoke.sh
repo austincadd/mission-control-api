@@ -201,12 +201,29 @@ events_data = parse_json(text, 'events_parse_error')
 events = events_data.get('events') or []
 if len(events) > 5:
     fail('events_pagination_broken', f'events limit not enforced: got {len(events)} items with limit=5')
-status_events = [e for e in events if e.get('type') == 'status']
+
+full_code, full_text = request('GET', f'/api/runs/{run_id}/events?limit=50')
+if full_code != 200:
+    fail('events_fetch_failed', f'GET /api/runs/{run_id}/events?limit=50 returned HTTP {full_code}')
+full_events_data = parse_json(full_text, 'events_parse_error_full')
+full_events = full_events_data.get('events') or []
+status_events = [e for e in full_events if e.get('type') == 'status']
 if not status_events:
     fail('contradictory_state', 'No status events returned for successful run')
 last_status = str(status_events[-1].get('payload', {}).get('status') or '')
 if last_status != 'success':
     fail('contradictory_state', f'Last status event {last_status} contradicts terminal run status success')
+
+if full_events:
+    since_id = str(full_events[0].get('id') or '')
+    if since_id:
+        since_code, since_text = request('GET', f'/api/runs/{run_id}/events?since={since_id}&limit=50')
+        if since_code != 200:
+            fail('events_fetch_failed', f'GET /api/runs/{run_id}/events?since=... returned HTTP {since_code}')
+        since_events_data = parse_json(since_text, 'events_parse_error_since')
+        since_events = since_events_data.get('events') or []
+        if any(str(evt.get('id') or '') == since_id for evt in since_events):
+            fail('events_since_broken', 'events?since did not exclude the anchor event')
 
 # Duplicate terminal write rejection must be explicit.
 complete_payload = {'worker_id': worker_id, 'status': 'success', 'result': final_run.get('result')}
