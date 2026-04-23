@@ -46,13 +46,19 @@ def request(method: str, path: str, body=None, auth: bool = True):
         headers['Content-Type'] = 'application/json'
         data = json.dumps(body).encode('utf-8')
     req = urllib.request.Request(url, data=data, method=method, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
-            return resp.getcode(), resp.read().decode('utf-8', 'replace')
-    except urllib.error.HTTPError as e:
-        return e.code, e.read().decode('utf-8', 'replace')
-    except Exception as e:
-        fail('backend_unreachable', f'{method} {path} failed: {e}')
+    last_error = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
+                return resp.getcode(), resp.read().decode('utf-8', 'replace')
+        except urllib.error.HTTPError as e:
+            return e.code, e.read().decode('utf-8', 'replace')
+        except Exception as e:
+            last_error = e
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            fail('backend_unreachable', f'{method} {path} failed: {e}')
 
 
 def parse_json(text: str, code: str):
