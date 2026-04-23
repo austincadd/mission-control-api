@@ -372,14 +372,11 @@ function ingestRunEvent(evt,rerender){
   bucket.run.status=evt.payload.status;
   if(evt.payload.status==='success'){
    bucket.run.ended_at=now();
-   const hadErrors=(bucket.events||[]).some(e=>e.type==='error'||(e.type==='stdout'&&e?.payload?.stream==='stderr'));
-   if(hadErrors){
-    bucket.run.status='degraded success';
-   } else if(state.settings.autoDoneOnSuccess){
+   if(state.settings.autoDoneOnSuccess){
     const t=state.tasks.find(x=>x.id===bucket.run.task_id); if(t) t.status='Done';
    }
   }
-  if(['failed','cancelled','degraded success'].includes(bucket.run.status)) bucket.run.ended_at=now();
+  if(['failed','cancelled'].includes(bucket.run.status)) bucket.run.ended_at=now();
  }
  save();
  if(rerender&&panelActiveTaskId()){

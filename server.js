@@ -360,10 +360,15 @@ function finalizeRunOnce(db, runId, status, details = {}) {
     throw err;
   }
 
+  const successWithError = status === 'success' && details.error;
+  if (successWithError) {
+    console.warn(`[mission-control] dropping error payload on success for run ${runId}`);
+  }
+
   const patch = {
     status,
     ended_at: iso(),
-    error: details.error ?? null,
+    error: status === 'success' ? null : (details.error ?? null),
     result: details.result ?? run.result ?? null,
     worker_id: details.worker_id ?? run.worker_id ?? null,
     heartbeat_at: details.heartbeat_at ?? run.heartbeat_at ?? null,
@@ -408,8 +413,12 @@ function applyWorkerEvent(db, run, event) {
         heartbeat_at: iso()
       });
     } else if (nextStatus === 'success' || nextStatus === 'failed' || nextStatus === 'cancelled') {
+      const successWithError = nextStatus === 'success' && payload.error;
+      if (successWithError) {
+        console.warn(`[mission-control] dropping worker error payload on success for run ${run.id}`);
+      }
       finalizeRunOnce(db, run.id, nextStatus, {
-        error: payload.error || null,
+        error: nextStatus === 'success' ? null : (payload.error || null),
         result: payload.result || null,
         worker_id: run.worker_id || event.worker_id || run.worker_id,
         heartbeat_at: iso()
