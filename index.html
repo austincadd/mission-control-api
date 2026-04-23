@@ -17,7 +17,7 @@
     .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}.stats{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:10px}.stat{padding:10px}.stat .v{font-size:21px;font-weight:700}
     table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted);cursor:pointer}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}.dot{width:8px;height:8px;border-radius:50%}
-    .s-backlog,.s-todo{background:#8492a6}.s-in-progress,.s-running,.s-queued{background:var(--accent)}.s-in-review{background:var(--warn)}.s-done,.s-success{background:var(--ok)}.s-cancelled,.s-failed{background:var(--danger)}
+    .s-backlog,.s-todo{background:#8492a6}.s-in-progress,.s-running,.s-queued{background:var(--accent)}.s-in-review,.s-degraded-success{background:var(--warn)}.s-done,.s-success{background:var(--ok)}.s-cancelled,.s-failed{background:var(--danger)}
     .panel{position:fixed;right:-640px;top:0;height:100vh;width:min(640px,100vw);background:var(--panel);border-left:1px solid var(--line);transition:.2s;padding:12px;overflow:auto;z-index:9}.panel.open{right:0}
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.2s;z-index:8}.overlay.show{opacity:1;pointer-events:auto}
     .run-events{max-height:220px;overflow:auto;background:rgba(0,0,0,.15);border:1px solid var(--line);border-radius:10px;padding:8px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
@@ -48,9 +48,9 @@
 <script>
 (()=>{
 const KEY='mission_control_v3';
-const DEFAULT_GATEWAY='https://mc-api.austincaddell.dev';
+const DEFAULT_GATEWAY='https://mission-control-api-mo8l.onrender.com';
 const DEFAULT_MODEL='openai-codex/gpt-5.3-codex';
-const FALLBACK_GATEWAYS=[DEFAULT_GATEWAY];
+const FALLBACK_GATEWAYS=[DEFAULT_GATEWAY,'https://mc-austin-control.loca.lt'];
 const ITEM_STATUS=['Backlog','Todo','In Progress','In Review','Done','Cancelled'];
 const PRIORITY=['No priority','Low','Medium','High','Urgent'];
 const now=()=>new Date().toISOString(); const uid=()=>Math.random().toString(36).slice(2,10);
@@ -91,17 +91,14 @@ async function probeGateway(){
  if(nowMs-lastProbeAt<7000) return;
  lastProbeAt=nowMs;
  if(badge) badge.textContent='Backend: checking...';
- const candidates=[state.settings.gatewayUrl,...FALLBACK_GATEWAYS].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
- for(const base of candidates){
-  try{
-   const r=await fetch(base.replace(/\/$/,'')+'/api/config',{headers:state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{}});
-   if(r.ok){
-    if(state.settings.gatewayUrl!==base){state.settings.gatewayUrl=base;save();toast('Gateway auto-updated');}
-    if(badge) badge.textContent='Backend: connected';
-    return true;
-   }
-  }catch{}
- }
+ const base=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
+ try{
+  const r=await fetch(base+'/api/config',{headers:state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{}});
+  if(r.ok){
+   if(badge) badge.textContent='Backend: connected';
+   return true;
+  }
+ }catch{}
  if(badge) badge.textContent='Backend: offline';
  return false;
 }
@@ -111,7 +108,7 @@ let activityStream=null, activityLastEventId=''; let activityBackoff=1000;
 
 function connectRunStream(runId){
  if(runStream) runStream.close(); if(!runId) return;
- const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/runs/${runId}/stream`); if(runLastEventId) u.searchParams.set('lastEventId',runLastEventId);
+ const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/runs/${runId}/stream`); if(runLastEventId) u.searchParams.set('lastEventId',runLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
  runStream=new EventSource(u.toString()); runStreamCtx=runId;
  runStream.addEventListener('run_event',e=>{runLastEventId=e.lastEventId||runLastEventId;const evt=JSON.parse(e.data);ingestRunEvent(evt,true)});
  runStream.addEventListener('run_snapshot',e=>{const snap=JSON.parse(e.data);if(snap.run){state.runCache[snap.run.id]={...(state.runCache[snap.run.id]||{}),run:snap.run};save();if(panelActiveTaskId()) openTask(panelActiveTaskId());}});
@@ -120,7 +117,7 @@ function connectRunStream(runId){
 }
 function connectActivity(){
  if(activityStream) activityStream.close();
- const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/activity/stream`); if(activityLastEventId) u.searchParams.set('lastEventId',activityLastEventId);
+ const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/activity/stream`); if(activityLastEventId) u.searchParams.set('lastEventId',activityLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
  activityStream=new EventSource(u.toString());
  activityStream.addEventListener('activity',e=>{activityLastEventId=e.lastEventId||activityLastEventId;const evt=JSON.parse(e.data);state.activity.unshift(evt);state.activity=state.activity.slice(0,80);save();if(state.selectedTab==='Overview') render();if(panelActiveTaskId()) openTask(panelActiveTaskId());});
  activityStream.onerror=()=>{activityStream.close();setTimeout(connectActivity,activityBackoff);activityBackoff=Math.min(activityBackoff*1.8,15000)};
@@ -245,7 +242,19 @@ function ingestRunEvent(evt,rerender){
  bucket.events=bucket.events||[]; bucket.events.push(evt);
  if(evt.type==='error'&&evt.payload?.message){bucket.run.failure_summary=(String(evt.payload.message).split(/\r?\n/)[0]||'').slice(0,220);}
  if(evt.type==='stdout'&&evt.payload?.stream==='stderr'&&evt.payload?.line&&!bucket.run.failure_summary){bucket.run.failure_summary=(String(evt.payload.line).split(/\r?\n/)[0]||'').slice(0,220);}
- if(evt.type==='status'&&evt.payload?.status){bucket.run.status=evt.payload.status; if(evt.payload.status==='success'){bucket.run.ended_at=now(); if(state.settings.autoDoneOnSuccess){const t=state.tasks.find(x=>x.id===bucket.run.task_id); if(t) t.status='Done';}} if(['failed','cancelled'].includes(evt.payload.status)) bucket.run.ended_at=now();}
+ if(evt.type==='status'&&evt.payload?.status){
+  bucket.run.status=evt.payload.status;
+  if(evt.payload.status==='success'){
+   bucket.run.ended_at=now();
+   const hadErrors=(bucket.events||[]).some(e=>e.type==='error'||(e.type==='stdout'&&e?.payload?.stream==='stderr'));
+   if(hadErrors){
+    bucket.run.status='degraded success';
+   } else if(state.settings.autoDoneOnSuccess){
+    const t=state.tasks.find(x=>x.id===bucket.run.task_id); if(t) t.status='Done';
+   }
+  }
+  if(['failed','cancelled','degraded success'].includes(bucket.run.status)) bucket.run.ended_at=now();
+ }
  save();
  if(rerender&&panelActiveTaskId()){
   const runEvents=el('runEvents'); if(runEvents&&runStreamCtx===evt.run_id) runEvents.innerHTML=renderEvents(bucket.events);

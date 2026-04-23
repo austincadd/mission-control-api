@@ -12,11 +12,14 @@ const DB_FILE = path.join(DATA_DIR, 'runs.json');
 const HANDLES_FILE = path.join(DATA_DIR, 'run-handles.json');
 
 const PORT = process.env.PORT || 8787;
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'anthropic/claude-haiku-4-5';
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'openai-codex/gpt-5.3-codex';
 const OPENCLAW_BIN = process.env.OPENCLAW_BIN || 'openclaw';
 const OPENCLAW_AGENT_CHANNEL = process.env.OPENCLAW_AGENT_CHANNEL || '';
 const AUTO_TRANSITION_IN_PROGRESS = (process.env.AUTO_TRANSITION_IN_PROGRESS || 'true') === 'true';
 const AUTO_TRANSITION_DONE = (process.env.AUTO_TRANSITION_DONE || 'true') === 'true';
+const ENABLE_EMBEDDED_FALLBACK = (process.env.ENABLE_EMBEDDED_FALLBACK || 'true') === 'true';
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://austincaddell.dev').split(',').map(s => s.trim()).filter(Boolean);
+const API_TOKEN = process.env.MISSION_CONTROL_API_TOKEN || '';
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -113,7 +116,7 @@ function addEvent(db, runId, type, payload = {}, level = 'info') {
   writeDb(db);
   const runClients = sseRunClients.get(runId) || new Set();
   for (const res of runClients) sendSse(res, 'run_event', evt, evt.id);
-  for (const res of sseActivityClients) sendSse(res, 'activity', evt, evt.id);
+  for (const res of sseActivityClients) sendSse(res, 'activity', sanitizeEventForActivity(evt), evt.id);
   return evt;
 }
 
@@ -132,6 +135,7 @@ function summaryFromText(text) {
 
 function computeFailureSummary(run, events) {
   if (!run) return null;
+  if (run.status === 'success') return null;
   if (run.failure_summary) return run.failure_summary;
 
   const ordered = (events || []).slice().sort((a, b) => a.timestamp.localeCompare(b.timestamp));
@@ -230,7 +234,6 @@ class OpenClawAdapter {
     addEvent(readDb(), run.id, 'message', {
       text: 'OpenClaw run process started',
       adapter: 'openclaw-cli',
-      command,
       assigned_agent: selectedAgent || null
     });
 
@@ -252,9 +255,16 @@ class OpenClawAdapter {
       activeProcesses.delete(run.id);
 
       if (err?.code === 'ENOENT') {
-        upsertHandle(run.id, { state: 'embedded_fallback', error: err.message });
+        if (ENABLE_EMBEDDED_FALLBACK) {
+          upsertHandle(run.id, { state: 'embedded_fallback', error: err.message });
+          addEvent(readDb(), run.id, 'message', { text: 'OpenClaw unavailable, switching to embedded fallback', reason: err.message }, 'warn');
+          startEmbeddedFallbackRun(run, context, err.message);
+          return;
+        }
+        upsertHandle(run.id, { state: 'error', error: err.message });
+        updateRun(readDb(), run.id, { status: 'failed', ended_at: iso(), error: err.message, failure_summary: err.message });
         addEvent(readDb(), run.id, 'error', { message: `Failed to start OpenClaw process: ${err.message}` }, 'error');
-        startEmbeddedFallbackRun(run, context, err.message);
+        addEvent(readDb(), run.id, 'status', { status: 'failed' }, 'error');
         return;
       }
 
@@ -339,15 +349,55 @@ class OpenClawAdapter {
 
 const adapter = new OpenClawAdapter();
 
+function sanitizeEventForActivity(evt) {
+  if (!evt) return evt;
+  if (evt.type === 'message') {
+    return {
+      ...evt,
+      payload: {
+        text: evt?.payload?.text || '',
+        adapter: evt?.payload?.adapter || undefined,
+        assigned_agent: evt?.payload?.assigned_agent || undefined
+      }
+    };
+  }
+  if (evt.type === 'stdout') {
+    return {
+      ...evt,
+      payload: {
+        stream: evt?.payload?.stream,
+        line: String(evt?.payload?.line || '').slice(0, 200)
+      }
+    };
+  }
+  return evt;
+}
+
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS blocked'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(__dirname));
+
+function requireAuth(req, res, next) {
+  if (!API_TOKEN) return res.status(500).json({ error: 'Server auth misconfigured: MISSION_CONTROL_API_TOKEN missing' });
+  const hdr = req.get('authorization') || '';
+  const queryToken = req.query?.token ? String(req.query.token) : '';
+  if (hdr === `Bearer ${API_TOKEN}` || queryToken === API_TOKEN) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
+}
 
 app.get('/api/config', (req, res) => {
   res.json({
     gateway_url: 'openclaw-cli',
-    auth_token_present: false,
+    auth_token_present: Boolean(API_TOKEN),
     default_model: DEFAULT_MODEL,
     toggles: {
       auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS,
@@ -356,7 +406,7 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-app.post('/api/tasks/:id/dispatch', async (req, res) => {
+app.post('/api/tasks/:id/dispatch', requireAuth, async (req, res) => {
   const db = readDb();
   const taskId = req.params.id;
   const active = db.runs.find(r => r.task_id === taskId && ['queued', 'running'].includes(r.status));
@@ -397,7 +447,7 @@ app.post('/api/tasks/:id/dispatch', async (req, res) => {
   res.status(202).json({ run });
 });
 
-app.post('/api/runs/:run_id/cancel', async (req, res) => {
+app.post('/api/runs/:run_id/cancel', requireAuth, async (req, res) => {
   const db = readDb();
   const run = db.runs.find(r => r.id === req.params.run_id);
   if (!run) return res.status(404).json({ error: 'Run not found' });
@@ -411,7 +461,7 @@ app.post('/api/runs/:run_id/cancel', async (req, res) => {
   res.json({ ok: true, run_id: run.id });
 });
 
-app.post('/api/runs/:run_id/retry', async (req, res) => {
+app.post('/api/runs/:run_id/retry', requireAuth, async (req, res) => {
   const db = readDb();
   const prev = db.runs.find(r => r.id === req.params.run_id);
   if (!prev) return res.status(404).json({ error: 'Run not found' });
@@ -443,7 +493,7 @@ app.post('/api/runs/:run_id/retry', async (req, res) => {
   res.status(202).json({ run, retried_from: prev.id });
 });
 
-app.get('/api/runs/:run_id', (req, res) => {
+app.get('/api/runs/:run_id', requireAuth, (req, res) => {
   const db = readDb();
   const run = db.runs.find(r => r.id === req.params.run_id);
   if (!run) return res.status(404).json({ error: 'Run not found' });
@@ -451,7 +501,7 @@ app.get('/api/runs/:run_id', (req, res) => {
   res.json({ run: enrichRun(run, events), events });
 });
 
-app.get('/api/tasks/:id/runs', (req, res) => {
+app.get('/api/tasks/:id/runs', requireAuth, (req, res) => {
   const db = readDb();
   const runs = db.runs
     .filter(r => r.task_id === req.params.id)
@@ -460,7 +510,7 @@ app.get('/api/tasks/:id/runs', (req, res) => {
   res.json({ runs });
 });
 
-app.get('/api/runs/:run_id/stream', (req, res) => {
+app.get('/api/runs/:run_id/stream', requireAuth, (req, res) => {
   const db = readDb();
   const run = db.runs.find(r => r.id === req.params.run_id);
   if (!run) return res.status(404).end();
@@ -493,7 +543,7 @@ app.get('/api/runs/:run_id/stream', (req, res) => {
   });
 });
 
-app.get('/api/activity/stream', (req, res) => {
+app.get('/api/activity/stream', requireAuth, (req, res) => {
   const db = readDb();
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -507,7 +557,7 @@ app.get('/api/activity/stream', (req, res) => {
     const idx = events.findIndex(e => e.id === lastId);
     replay = idx >= 0 ? events.slice(idx + 1) : replay;
   }
-  replay.forEach(evt => sendSse(res, 'activity', evt, evt.id));
+  replay.forEach(evt => sendSse(res, 'activity', sanitizeEventForActivity(evt), evt.id));
 
   sseActivityClients.add(res);
   const ping = setInterval(() => sendSse(res, 'ping', { t: Date.now() }, `ping_${Date.now()}`), 20_000);
