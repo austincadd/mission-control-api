@@ -157,13 +157,18 @@ run_status = str(run.get('status') or '')
 if not run_id:
     fail('dispatch_failed', 'Dispatch response missing run.id')
 if run_status != 'queued':
-    fail('dispatch_failed', f'Dispatch response run.status expected queued, got {run_status or "empty"}')
+    fail('dispatch_not_queued', f'Dispatch response run.status expected queued, got {run_status or "empty"}')
 if 'worker_message' in run:
     fail('dispatch_failed', 'Dispatch response leaked worker_message')
 info(f'dispatched run {run_id}')
 
+# Dispatch response proves queued. The poll loop only needs to observe the
+# post-claim lifecycle because the worker can claim so quickly that the first
+# poll misses queued entirely; that race is expected and should not be "fixed"
+# by re-tightening the polling contract.
 # Poll lifecycle
 seen = []
+highest_stage = -1  # claimed=0, running=1, success=2
 end = time.time() + POLL_TIMEOUT
 final_run = None
 while time.time() < end:
@@ -180,11 +185,32 @@ while time.time() < end:
     if not seen or seen[-1] != status:
         seen.append(status)
         info(f'run {run_id} -> {status}')
-    if status in ('queued', 'claimed', 'running'):
+
+    if status == 'queued':
+        if highest_stage >= 0:
+            fail('run_progression_invalid', f'Unexpected queued after post-claim progress for {run_id}: {seen}')
         time.sleep(POLL_INTERVAL)
         continue
-    final_run = run_obj
-    break
+
+    if status == 'claimed':
+        stage = 0
+    elif status == 'running':
+        stage = 1
+    elif status == 'success':
+        stage = 2
+    elif status in ('failed', 'cancelled'):
+        final_run = run_obj
+        break
+    else:
+        fail('unknown_state', f'Unknown run status {status or "empty"} for {run_id}: {seen}')
+
+    if stage < highest_stage:
+        fail('run_progression_invalid', f'Unexpected status progression for {run_id}: {seen}')
+    highest_stage = max(highest_stage, stage)
+    if status == 'success':
+        final_run = run_obj
+        break
+    time.sleep(POLL_INTERVAL)
 else:
     fail('run_never_claimed', f'Run {run_id} did not reach a terminal state within {POLL_TIMEOUT}s (seen={seen})')
 
@@ -192,8 +218,6 @@ final_status = str((final_run or {}).get('status') or '')
 if final_status != 'success':
     failure_summary = str((final_run or {}).get('failure_summary') or (final_run or {}).get('error') or 'unknown error')
     fail('run_failed', f'Run {run_id} finished as {final_status or "empty"}: {failure_summary}')
-if seen[:1] != ['queued'] or 'running' not in seen:
-    fail('run_progression_invalid', f'Unexpected status progression for {run_id}: {seen}')
 
 # Events contract and pagination cap
 code, text = request('GET', f'/api/runs/{run_id}/events?limit=5')
