@@ -68,13 +68,41 @@ function probeStep(args, label) {
 }
 
 async function probeOpenClaw() {
-  const versionProbe = probeStep(['--version'], 'openclaw --version');
-  if (!versionProbe.ok) return versionProbe;
+  const probeId = `worker-health-probe-${process.pid}-${Date.now()}`;
+  const probe = probeStep(
+    ['agent', '--json', '--session-id', probeId, '--timeout', '20', '--message', 'health probe: reply with ok only'],
+    'openclaw agent --json'
+  );
+  if (!probe.ok) return probe;
 
-  const helpProbe = probeStep(['agent', '--help'], 'openclaw agent --help');
-  if (!helpProbe.ok) return helpProbe;
+  let parsed;
+  try {
+    parsed = JSON.parse(probe.stdout || '{}');
+  } catch (err) {
+    return { ok: false, reason: `openclaw agent --json returned invalid JSON: ${err.message}` };
+  }
 
-  return { ok: true, reason: null, details: { version: versionProbe.stdout, help: helpProbe.stdout } };
+  const status = String(parsed.status || '').trim();
+  const summary = String(parsed.summary || '').trim();
+  const payloadText = parsed?.result?.payloads?.[0]?.text;
+  if (status !== 'ok' || summary !== 'completed' || payloadText !== 'ok') {
+    return {
+      ok: false,
+      reason: `openclaw agent probe unexpected result: status=${status || 'empty'} summary=${summary || 'empty'} payload=${JSON.stringify(payloadText)}`
+    };
+  }
+
+  return {
+    ok: true,
+    reason: null,
+    details: {
+      status,
+      summary,
+      payload: payloadText,
+      durationMs: parsed?.result?.meta?.durationMs ?? null,
+      sessionId: parsed?.result?.meta?.agentMeta?.sessionId || probeId
+    }
+  };
 }
 
 function normalizeOpenClawAgentId(agentId) {
@@ -298,7 +326,7 @@ async function main() {
   workerReady = Boolean(probe.ok);
   workerUnhealthyReason = probe.ok ? null : probe.reason || 'openclaw_probe_failed';
   if (workerReady) {
-    console.log(`[worker] openclaw probe ok: ${probe.details?.version || 'version ok'}`);
+    console.log(`[worker] openclaw probe ok: session ${probe.details?.sessionId || 'unknown'} duration=${probe.details?.durationMs ?? 'n/a'}ms`);
   } else {
     console.error(`[worker] unhealthy: ${workerUnhealthyReason}`);
   }
