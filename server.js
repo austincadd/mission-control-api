@@ -3,23 +3,26 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'runs.json');
-const HANDLES_FILE = path.join(DATA_DIR, 'run-handles.json');
 
-const PORT = process.env.PORT || 8787;
+const PORT = Number(process.env.PORT || 8787);
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'openai-codex/gpt-5.3-codex';
-const OPENCLAW_BIN = process.env.OPENCLAW_BIN || 'openclaw';
-const OPENCLAW_AGENT_CHANNEL = process.env.OPENCLAW_AGENT_CHANNEL || '';
 const AUTO_TRANSITION_IN_PROGRESS = (process.env.AUTO_TRANSITION_IN_PROGRESS || 'true') === 'true';
 const AUTO_TRANSITION_DONE = (process.env.AUTO_TRANSITION_DONE || 'true') === 'true';
-const ENABLE_EMBEDDED_FALLBACK = (process.env.ENABLE_EMBEDDED_FALLBACK || 'true') === 'true';
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://austincaddell.dev').split(',').map(s => s.trim()).filter(Boolean);
-const API_TOKEN = process.env.MISSION_CONTROL_API_TOKEN || '';
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://austincaddell.dev')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+const API_TOKEN = process.env.MISSION_CONTROL_API_TOKEN || process.env.OPENCLAW_TOKEN || '';
+const WORKER_TOKEN = process.env.MISSION_CONTROL_WORKER_TOKEN || API_TOKEN || process.env.OPENCLAW_TOKEN || '';
+const WORKER_CLAIM_TTL_MS = Number(process.env.WORKER_CLAIM_TTL_MS || 30_000);
+const WORKER_HEARTBEAT_TTL_MS = Number(process.env.WORKER_HEARTBEAT_TTL_MS || 60_000);
+const WORKER_HEARTBEAT_INTERVAL_MS = Number(process.env.WORKER_HEARTBEAT_INTERVAL_MS || 15_000);
+const WORKER_SWEEP_INTERVAL_MS = Number(process.env.WORKER_SWEEP_INTERVAL_MS || 5_000);
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -27,14 +30,36 @@ function uid(prefix = '') {
   return `${prefix}${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-5)}`;
 }
 
-function iso() {
-  return new Date().toISOString();
+function iso(ms = Date.now()) {
+  return new Date(ms).toISOString();
+}
+
+function nowMs() {
+  return Date.now();
+}
+
+function parseTime(value) {
+  if (!value) return null;
+  const t = Date.parse(value);
+  return Number.isFinite(t) ? t : null;
+}
+
+function isTerminalStatus(status) {
+  return ['success', 'failed', 'cancelled'].includes(status);
+}
+
+function ensureDbShape(db) {
+  const out = { ...(db || {}) };
+  out.runs = Array.isArray(out.runs) ? out.runs : [];
+  out.events = Array.isArray(out.events) ? out.events : [];
+  out.workers = out.workers && typeof out.workers === 'object' && !Array.isArray(out.workers) ? out.workers : {};
+  return out;
 }
 
 function readDb() {
   if (!fs.existsSync(DB_FILE)) {
     const seededRunId = uid('run_');
-    const seeded = {
+    const seeded = ensureDbShape({
       runs: [
         {
           id: seededRunId,
@@ -42,86 +67,63 @@ function readDb() {
           agent_id: 'demo-agent',
           status: 'success',
           model: DEFAULT_MODEL,
-          started_at: new Date(Date.now() - 12 * 60_000).toISOString(),
-          ended_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+          started_at: iso(nowMs() - 12 * 60_000),
+          ended_at: iso(nowMs() - 10 * 60_000),
           input_tokens: 412,
           output_tokens: 1034,
           cost_estimate: 0.0112,
           error: null,
-          source: 'seed'
+          source: 'seed',
+          dispatch_context: {
+            task: 'Seeded demo task',
+            project: 'Mission Control',
+            context: 'Seed data created on first launch',
+            related_tasks: [],
+            related_issues: [],
+            agent: 'demo-agent'
+          },
+          claim_deadline_at: null,
+          claimed_at: null,
+          worker_id: null,
+          heartbeat_at: null,
+          running_at: null,
+          result: { summary: 'Seeded success run' }
         }
       ],
       events: [
-        { id: uid('evt_'), run_id: seededRunId, timestamp: new Date(Date.now() - 12 * 60_000).toISOString(), type: 'status', payload: { status: 'queued' }, level: 'info' },
-        { id: uid('evt_'), run_id: seededRunId, timestamp: new Date(Date.now() - 11.5 * 60_000).toISOString(), type: 'message', payload: { text: 'Starting analysis pass' }, level: 'info' },
-        { id: uid('evt_'), run_id: seededRunId, timestamp: new Date(Date.now() - 11 * 60_000).toISOString(), type: 'tool_call', payload: { tool: 'read', args: { path: 'index.html' } }, level: 'info' },
-        { id: uid('evt_'), run_id: seededRunId, timestamp: new Date(Date.now() - 10.7 * 60_000).toISOString(), type: 'tool_result', payload: { ok: true, bytes: 8042 }, level: 'info' },
-        { id: uid('evt_'), run_id: seededRunId, timestamp: new Date(Date.now() - 10.2 * 60_000).toISOString(), type: 'status', payload: { status: 'success' }, level: 'info' }
-      ]
-    };
+        { id: uid('evt_'), run_id: seededRunId, timestamp: iso(nowMs() - 12 * 60_000), type: 'status', payload: { status: 'queued' }, level: 'info' },
+        { id: uid('evt_'), run_id: seededRunId, timestamp: iso(nowMs() - 11.5 * 60_000), type: 'message', payload: { text: 'Starting analysis pass' }, level: 'info' },
+        { id: uid('evt_'), run_id: seededRunId, timestamp: iso(nowMs() - 11 * 60_000), type: 'tool_call', payload: { tool: 'read', args: { path: 'index.html' } }, level: 'info' },
+        { id: uid('evt_'), run_id: seededRunId, timestamp: iso(nowMs() - 10.7 * 60_000), type: 'tool_result', payload: { ok: true, bytes: 8042 }, level: 'info' },
+        { id: uid('evt_'), run_id: seededRunId, timestamp: iso(nowMs() - 10.2 * 60_000), type: 'status', payload: { status: 'success' }, level: 'info' }
+      ],
+      workers: {}
+    });
     fs.writeFileSync(DB_FILE, JSON.stringify(seeded, null, 2));
     return seeded;
   }
-  return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-}
 
-function writeDb(db) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-}
-
-function readHandles() {
-  if (!fs.existsSync(HANDLES_FILE)) return { runs: {} };
   try {
-    return JSON.parse(fs.readFileSync(HANDLES_FILE, 'utf8'));
+    return ensureDbShape(JSON.parse(fs.readFileSync(DB_FILE, 'utf8')));
   } catch {
-    return { runs: {} };
+    return ensureDbShape({ runs: [], events: [], workers: {} });
   }
 }
 
-function writeHandles(handles) {
-  fs.writeFileSync(HANDLES_FILE, JSON.stringify(handles, null, 2));
+function writeDb(db) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(ensureDbShape(db), null, 2));
 }
 
-function upsertHandle(runId, patch) {
-  const handles = readHandles();
-  handles.runs[runId] = {
-    ...(handles.runs[runId] || {}),
-    ...patch,
-    updated_at: iso()
-  };
-  writeHandles(handles);
-  return handles.runs[runId];
+function getEventsForRun(db, runId) {
+  return db.events.filter(e => e.run_id === runId).sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
 }
 
-function deleteHandle(runId) {
-  const handles = readHandles();
-  delete handles.runs[runId];
-  writeHandles(handles);
-}
-
-const sseRunClients = new Map();
-const sseActivityClients = new Set();
-const activeProcesses = new Map();
-const embeddedTimers = new Map();
-
-function sendSse(res, event, data, id) {
-  if (id) res.write(`id: ${id}\n`);
-  if (event) res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
-}
-
-function addEvent(db, runId, type, payload = {}, level = 'info') {
-  const evt = { id: uid('evt_'), run_id: runId, timestamp: iso(), type, payload, level };
-  db.events.push(evt);
-  writeDb(db);
-  const runClients = sseRunClients.get(runId) || new Set();
-  for (const res of runClients) sendSse(res, 'run_event', evt, evt.id);
-  for (const res of sseActivityClients) sendSse(res, 'activity', sanitizeEventForActivity(evt), evt.id);
-  return evt;
+function getRun(db, runId) {
+  return db.runs.find(r => r.id === runId) || null;
 }
 
 function updateRun(db, runId, patch) {
-  const run = db.runs.find(r => r.id === runId);
+  const run = getRun(db, runId);
   if (!run) return null;
   Object.assign(run, patch);
   writeDb(db);
@@ -134,11 +136,10 @@ function summaryFromText(text) {
 }
 
 function computeFailureSummary(run, events) {
-  if (!run) return null;
-  if (run.status === 'success') return null;
+  if (!run || run.status === 'success') return null;
   if (run.failure_summary) return run.failure_summary;
 
-  const ordered = (events || []).slice().sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const ordered = (events || []).slice().sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
   const lastError = ordered.filter(e => e.type === 'error').at(-1);
   const lastStderr = ordered.filter(e => e.type === 'stdout' && e?.payload?.stream === 'stderr').at(-1);
   const lastStdout = ordered.filter(e => e.type === 'stdout' && e?.payload?.stream === 'stdout').at(-1);
@@ -152,202 +153,63 @@ function computeFailureSummary(run, events) {
   );
 }
 
-function enrichRun(run, eventsForRun = null) {
-  const events = eventsForRun || readDb().events.filter(e => e.run_id === run.id);
+function enrichRun(run, events = null) {
+  const resolvedEvents = events || getEventsForRun(readDb(), run.id);
   return {
     ...run,
-    failure_summary: computeFailureSummary(run, events)
+    failure_summary: computeFailureSummary(run, resolvedEvents)
   };
 }
 
-function buildAgentMessage(run, context) {
+function buildDispatchContext(body = {}) {
+  return {
+    task: body.task ?? null,
+    project: body.project ?? null,
+    context: body.context ?? null,
+    related_tasks: Array.isArray(body.related_tasks) ? body.related_tasks : [],
+    related_issues: Array.isArray(body.related_issues) ? body.related_issues : [],
+    agent: body.agent || (body.agent_id ? { id: body.agent_id } : null)
+  };
+}
+
+function buildWorkerMessage(run) {
+  const dispatchContext = run.dispatch_context || {};
   return [
     `Mission Control run_id: ${run.id}`,
     `Task ID: ${run.task_id}`,
     `Requested model: ${run.model}`,
-    `Assigned agent: ${(context.agent_id || context?.agent?.id || context?.agent || run.agent_id || 'default')}`,
+    `Assigned agent: ${run.agent_id || 'default'}`,
     '',
     'Task payload:',
     JSON.stringify({
-      task: context.task ?? null,
-      project: context.project ?? null,
-      related_tasks: context.related_tasks ?? [],
-      related_issues: context.related_issues ?? [],
-      context: context.context ?? null
+      task: dispatchContext.task ?? null,
+      project: dispatchContext.project ?? null,
+      related_tasks: dispatchContext.related_tasks ?? [],
+      related_issues: dispatchContext.related_issues ?? [],
+      context: dispatchContext.context ?? null
     }, null, 2)
   ].join('\n');
 }
 
-function startEmbeddedFallbackRun(run, context = {}, reason = 'openclaw CLI unavailable') {
-  addEvent(readDb(), run.id, 'message', { text: 'Falling back to embedded runner', reason }, 'warn');
-
-  const t1 = setTimeout(() => {
-    addEvent(readDb(), run.id, 'stdout', { stream: 'stdout', line: 'Embedded runner started' });
-  }, 120);
-
-  const t2 = setTimeout(() => {
-    const taskText = typeof context?.task === 'string' ? context.task : context?.task?.title || context?.task?.description || null;
-    const summary = taskText ? `Embedded execution completed: ${String(taskText).slice(0, 140)}` : 'Embedded execution completed';
-    addEvent(readDb(), run.id, 'tool_result', { ok: true, mode: 'embedded-fallback', summary });
-    updateRun(readDb(), run.id, {
-      status: 'success',
-      ended_at: iso(),
-      error: null,
-      failure_summary: null
-    });
-    addEvent(readDb(), run.id, 'status', { status: 'success', auto_transition_done: AUTO_TRANSITION_DONE });
-    embeddedTimers.delete(run.id);
-    deleteHandle(run.id);
-  }, 700);
-
-  embeddedTimers.set(run.id, [t1, t2]);
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  try {
+    const u = new URL(origin);
+    if (['localhost', '127.0.0.1', '::1'].includes(u.hostname)) return true;
+  } catch {
+    // ignore
+  }
+  return ALLOWED_ORIGINS.includes(origin);
 }
 
-class OpenClawAdapter {
-  constructor() {}
-
-  async dispatch(run, context) {
-    const selectedAgent = context.agent_id || context?.agent?.id || context?.agent || run.agent_id || '';
-    const argv = ['agent', '--json', '--message', buildAgentMessage(run, context)];
-
-    if (selectedAgent) argv.push('--agent', selectedAgent);
-    if (OPENCLAW_AGENT_CHANNEL) argv.push('--channel', OPENCLAW_AGENT_CHANNEL);
-
-    const child = spawn(OPENCLAW_BIN, argv, {
-      cwd: __dirname,
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
-
-    const command = `${OPENCLAW_BIN} ${argv.map(a => JSON.stringify(a)).join(' ')}`;
-    activeProcesses.set(run.id, child);
-    upsertHandle(run.id, {
-      run_id: run.id,
-      pid: child.pid,
-      command,
-      state: 'running',
-      agent: selectedAgent || null
-    });
-
-    updateRun(readDb(), run.id, { status: 'running' });
-    addEvent(readDb(), run.id, 'status', { status: 'running', auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS });
-    addEvent(readDb(), run.id, 'message', {
-      text: 'OpenClaw run process started',
-      adapter: 'openclaw-cli',
-      assigned_agent: selectedAgent || null
-    });
-
-    const onStreamChunk = (type, chunk) => {
-      const text = chunk.toString('utf8');
-      const lines = text.split(/\r?\n/).filter(Boolean);
-      for (const line of lines) {
-        addEvent(readDb(), run.id, 'stdout', { stream: type, line });
-        if (line.includes('tool')) {
-          addEvent(readDb(), run.id, 'tool_call', { stream: type, raw: line });
-        }
-      }
-    };
-
-    child.stdout.on('data', (chunk) => onStreamChunk('stdout', chunk));
-    child.stderr.on('data', (chunk) => onStreamChunk('stderr', chunk));
-
-    child.on('error', (err) => {
-      activeProcesses.delete(run.id);
-
-      if (err?.code === 'ENOENT') {
-        if (ENABLE_EMBEDDED_FALLBACK) {
-          upsertHandle(run.id, { state: 'embedded_fallback', error: err.message });
-          addEvent(readDb(), run.id, 'message', { text: 'OpenClaw unavailable, switching to embedded fallback', reason: err.message }, 'warn');
-          startEmbeddedFallbackRun(run, context, err.message);
-          return;
-        }
-        upsertHandle(run.id, { state: 'error', error: err.message });
-        updateRun(readDb(), run.id, { status: 'failed', ended_at: iso(), error: err.message, failure_summary: err.message });
-        addEvent(readDb(), run.id, 'error', { message: `Failed to start OpenClaw process: ${err.message}` }, 'error');
-        addEvent(readDb(), run.id, 'status', { status: 'failed' }, 'error');
-        return;
-      }
-
-      upsertHandle(run.id, { state: 'error', error: err.message });
-      updateRun(readDb(), run.id, { status: 'failed', ended_at: iso(), error: err.message, failure_summary: err.message });
-      addEvent(readDb(), run.id, 'error', { message: `Failed to start OpenClaw process: ${err.message}` }, 'error');
-      addEvent(readDb(), run.id, 'status', { status: 'failed' }, 'error');
-    });
-
-    child.on('close', (code, signal) => {
-      activeProcesses.delete(run.id);
-      const db = readDb();
-      const current = db.runs.find(r => r.id === run.id);
-      if (!current || current.status === 'cancelled') {
-        deleteHandle(run.id);
-        return;
-      }
-
-      const handleState = readHandles().runs[run.id]?.state;
-      if (handleState === 'embedded_fallback') {
-        return;
-      }
-
-      const successful = code === 0;
-      if (successful) {
-        updateRun(db, run.id, {
-          status: 'success',
-          ended_at: iso(),
-          error: null,
-          cost_estimate: current.cost_estimate || 0
-        });
-        addEvent(readDb(), run.id, 'tool_result', { ok: true, command_exit_code: code, signal: signal || null });
-        addEvent(readDb(), run.id, 'status', { status: 'success', auto_transition_done: AUTO_TRANSITION_DONE });
-      } else {
-        const message = `OpenClaw process exited with code ${code ?? 'null'}${signal ? ` signal ${signal}` : ''}`;
-        updateRun(db, run.id, { status: 'failed', ended_at: iso(), error: message, failure_summary: message });
-        addEvent(readDb(), run.id, 'error', { message }, 'error');
-        addEvent(readDb(), run.id, 'status', { status: 'failed' }, 'error');
-      }
-      deleteHandle(run.id);
-    });
-
-    return {
-      mode: 'openclaw-cli',
-      process_pid: child.pid,
-      command,
-      assigned_agent: selectedAgent || null
-    };
-  }
-
-  async cancel(run) {
-    const child = activeProcesses.get(run.id);
-    const existing = readHandles().runs[run.id] || null;
-    const timers = embeddedTimers.get(run.id) || null;
-
-    if (timers?.length) {
-      for (const timer of timers) clearTimeout(timer);
-      embeddedTimers.delete(run.id);
-    }
-
-    if (child) {
-      child.kill('SIGTERM');
-      setTimeout(() => {
-        if (activeProcesses.has(run.id)) child.kill('SIGKILL');
-      }, 1500).unref();
-    } else if (existing?.pid) {
-      try {
-        process.kill(existing.pid, 'SIGTERM');
-      } catch {
-        // process already dead
-      }
-    }
-
-    upsertHandle(run.id, {
-      state: 'cancel_requested',
-      cancel_requested_at: iso()
-    });
-
-    return { mode: 'openclaw-cli', cancelled: true, run_id: run.id, pid: existing?.pid || child?.pid || null };
-  }
+function sendSse(res, event, data, id) {
+  if (id) res.write(`id: ${id}\n`);
+  if (event) res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-const adapter = new OpenClawAdapter();
+const sseRunClients = new Map();
+const sseActivityClients = new Set();
 
 function sanitizeEventForActivity(evt) {
   if (!evt) return evt;
@@ -373,45 +235,213 @@ function sanitizeEventForActivity(evt) {
   return evt;
 }
 
+function addEvent(db, runId, type, payload = {}, level = 'info') {
+  const evt = { id: uid('evt_'), run_id: runId, timestamp: iso(), type, payload, level };
+  db.events.push(evt);
+  writeDb(db);
+
+  const runClients = sseRunClients.get(runId) || new Set();
+  for (const res of runClients) sendSse(res, 'run_event', evt, evt.id);
+  for (const res of sseActivityClients) sendSse(res, 'activity', sanitizeEventForActivity(evt), evt.id);
+
+  return evt;
+}
+
+function authGuard(token, label) {
+  return (req, res, next) => {
+    if (!token) return next();
+    const hdr = req.get('authorization') || '';
+    const queryToken = req.query?.token ? String(req.query.token) : '';
+    if (hdr === `Bearer ${token}` || queryToken === token) return next();
+    return res.status(401).json({ error: `Unauthorized ${label}` });
+  };
+}
+
+function chooseClaimableRun(db, now = nowMs()) {
+  return db.runs
+    .slice()
+    .sort((a, b) => (a.started_at || '').localeCompare(b.started_at || ''))
+    .find(run => run.status === 'queued' && (!run.claim_deadline_at || parseTime(run.claim_deadline_at) > now) && !isTerminalStatus(run.status))
+    || null;
+}
+
+function finalizeRun(db, runId, status, details = {}) {
+  const run = getRun(db, runId);
+  if (!run) return null;
+
+  const patch = {
+    status,
+    ended_at: iso(),
+    error: details.error ?? null,
+    result: details.result ?? run.result ?? null,
+    worker_id: details.worker_id ?? run.worker_id ?? null,
+    heartbeat_at: details.heartbeat_at ?? run.heartbeat_at ?? null,
+    running_at: run.running_at || details.running_at || null,
+    claimed_at: run.claimed_at || details.claimed_at || null,
+    failure_summary: details.failure_summary ?? (status === 'success' ? null : run.failure_summary || details.error || null)
+  };
+
+  if (status === 'cancelled') {
+    patch.error = null;
+    patch.failure_summary = null;
+  }
+
+  Object.assign(run, patch);
+  writeDb(db);
+  return run;
+}
+
+function applyWorkerEvent(db, run, event) {
+  if (!event || !event.type) return null;
+
+  const type = String(event.type);
+  const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+  const level = event.level || (type === 'error' ? 'error' : 'info');
+  const evt = addEvent(db, run.id, type, payload, level);
+
+  if (type === 'status') {
+    const nextStatus = String(payload.status || '').trim();
+    if (nextStatus === 'running') {
+      updateRun(db, run.id, {
+        status: 'running',
+        running_at: run.running_at || iso(),
+        worker_id: run.worker_id || event.worker_id || run.worker_id,
+        heartbeat_at: iso(),
+        error: null
+      });
+    } else if (nextStatus === 'claimed') {
+      updateRun(db, run.id, {
+        status: 'claimed',
+        claimed_at: run.claimed_at || iso(),
+        worker_id: run.worker_id || event.worker_id || run.worker_id,
+        heartbeat_at: iso()
+      });
+    } else if (nextStatus === 'success' || nextStatus === 'failed' || nextStatus === 'cancelled') {
+      finalizeRun(db, run.id, nextStatus, {
+        error: payload.error || null,
+        result: payload.result || null,
+        worker_id: run.worker_id || event.worker_id || run.worker_id,
+        heartbeat_at: iso()
+      });
+    }
+  }
+
+  if (type === 'error') {
+    updateRun(db, run.id, { error: payload.message || run.error || 'Worker reported error' });
+  }
+
+  if (type === 'tool_result' && payload && typeof payload === 'object') {
+    updateRun(db, run.id, { result: payload.result || payload });
+  }
+
+  return evt;
+}
+
+function failRunForWorkerIssue(db, run, reason, status = 'failed') {
+  if (!run || isTerminalStatus(run.status)) return null;
+  updateRun(db, run.id, {
+    status,
+    ended_at: iso(),
+    error: reason,
+    failure_summary: reason
+  });
+  addEvent(db, run.id, 'error', { message: reason }, 'error');
+  addEvent(db, run.id, 'status', { status }, status === 'cancelled' ? 'warn' : 'error');
+  return getRun(db, run.id);
+}
+
+function getWorker(db, workerId) {
+  return db.workers[workerId] || null;
+}
+
+function upsertWorker(db, workerId, patch = {}) {
+  const current = db.workers[workerId] || { id: workerId, connected_at: iso(), last_heartbeat_at: null };
+  db.workers[workerId] = {
+    ...current,
+    ...patch,
+    id: workerId,
+    updated_at: iso()
+  };
+  writeDb(db);
+  return db.workers[workerId];
+}
+
+function listCancelledRunsForWorker(db, workerId) {
+  return db.runs
+    .filter(run => run.worker_id === workerId && run.status === 'cancelled' && !run.cancel_acknowledged_at)
+    .map(run => run.id);
+}
+
+function sweepStaleRuns() {
+  const db = readDb();
+  const now = nowMs();
+  let changed = false;
+
+  for (const run of db.runs) {
+    if (run.status === 'queued' && run.claim_deadline_at && parseTime(run.claim_deadline_at) <= now) {
+      failRunForWorkerIssue(db, run, 'no_worker_available', 'failed');
+      changed = true;
+      continue;
+    }
+
+    if ((run.status === 'claimed' || run.status === 'running') && run.worker_id) {
+      const worker = getWorker(db, run.worker_id);
+      const lastHeartbeat = parseTime(worker?.last_heartbeat_at || run.heartbeat_at || run.claimed_at || run.started_at);
+      if (!lastHeartbeat) continue;
+      if (now - lastHeartbeat > WORKER_HEARTBEAT_TTL_MS) {
+        failRunForWorkerIssue(db, run, 'worker_disconnected', 'failed');
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) writeDb(db);
+}
+
+if (!fs.existsSync(DB_FILE)) readDb();
+setInterval(sweepStaleRuns, WORKER_SWEEP_INTERVAL_MS).unref();
+
 const app = express();
 app.use(cors({
   origin(origin, cb) {
-    if (!origin) return cb(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (!origin || isAllowedOrigin(origin)) return cb(null, true);
     return cb(new Error('CORS blocked'));
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Worker-Id']
 }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(__dirname));
 
-function requireAuth(req, res, next) {
-  if (!API_TOKEN) return res.status(500).json({ error: 'Server auth misconfigured: MISSION_CONTROL_API_TOKEN missing' });
-  const hdr = req.get('authorization') || '';
-  const queryToken = req.query?.token ? String(req.query.token) : '';
-  if (hdr === `Bearer ${API_TOKEN}` || queryToken === API_TOKEN) return next();
-  return res.status(401).json({ error: 'Unauthorized' });
-}
+const requireApiAuth = authGuard(API_TOKEN, 'API');
+const requireWorkerAuth = authGuard(WORKER_TOKEN, 'worker');
 
 app.get('/api/config', (req, res) => {
   res.json({
-    gateway_url: 'openclaw-cli',
+    gateway_url: 'worker-protocol',
     auth_token_present: Boolean(API_TOKEN),
+    worker_token_present: Boolean(WORKER_TOKEN),
+    execution_mode: 'worker-protocol',
     default_model: DEFAULT_MODEL,
     toggles: {
       auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS,
       auto_transition_done: AUTO_TRANSITION_DONE
+    },
+    worker_protocol: {
+      claim_ttl_ms: WORKER_CLAIM_TTL_MS,
+      heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS,
+      heartbeat_ttl_ms: WORKER_HEARTBEAT_TTL_MS
     }
   });
 });
 
-app.post('/api/tasks/:id/dispatch', requireAuth, async (req, res) => {
+app.post('/api/tasks/:id/dispatch', requireApiAuth, async (req, res) => {
   const db = readDb();
   const taskId = req.params.id;
-  const active = db.runs.find(r => r.task_id === taskId && ['queued', 'running'].includes(r.status));
+  const active = db.runs.find(r => r.task_id === taskId && !isTerminalStatus(r.status));
   if (active) return res.status(409).json({ error: 'Task already has an active run', active_run_id: active.id });
 
+  const dispatchContext = buildDispatchContext(req.body);
   const run = {
     id: uid('run_'),
     task_id: taskId,
@@ -424,51 +454,60 @@ app.post('/api/tasks/:id/dispatch', requireAuth, async (req, res) => {
     output_tokens: 0,
     cost_estimate: 0,
     error: null,
-    source: 'dispatch'
+    failure_summary: null,
+    source: 'dispatch',
+    dispatch_context: dispatchContext,
+    worker_message: '',
+    claim_deadline_at: iso(nowMs() + WORKER_CLAIM_TTL_MS),
+    claimed_at: null,
+    worker_id: null,
+    running_at: null,
+    heartbeat_at: null,
+    result: null,
+    cancel_requested_at: null,
+    cancel_acknowledged_at: null
   };
+  run.worker_message = buildWorkerMessage(run);
 
   db.runs.unshift(run);
   writeDb(db);
 
-  addEvent(readDb(), run.id, 'status', { status: 'queued', auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS });
-  addEvent(readDb(), run.id, 'message', {
+  addEvent(db, run.id, 'status', { status: 'queued', auto_transition_in_progress: AUTO_TRANSITION_IN_PROGRESS });
+  addEvent(db, run.id, 'message', {
     text: 'Dispatch accepted',
-    context: {
-      task: req.body.task || null,
-      project: req.body.project || null,
-      agent: req.body.agent || null,
-      related_tasks: req.body.related_tasks || [],
-      related_issues: req.body.related_issues || []
-    }
+    context: dispatchContext
   });
 
-  await adapter.dispatch(run, req.body);
-
-  res.status(202).json({ run });
+  res.status(202).json({ run: enrichRun(run, getEventsForRun(db, run.id)) });
 });
 
-app.post('/api/runs/:run_id/cancel', requireAuth, async (req, res) => {
+app.post('/api/runs/:run_id/cancel', requireApiAuth, async (req, res) => {
   const db = readDb();
-  const run = db.runs.find(r => r.id === req.params.run_id);
+  const run = getRun(db, req.params.run_id);
   if (!run) return res.status(404).json({ error: 'Run not found' });
-  if (!['queued', 'running'].includes(run.status)) return res.status(409).json({ error: `Cannot cancel run in status ${run.status}` });
+  if (isTerminalStatus(run.status)) return res.status(409).json({ error: `Cannot cancel run in status ${run.status}` });
 
-  await adapter.cancel(run);
-  updateRun(db, run.id, { status: 'cancelled', ended_at: iso(), error: null });
-  addEvent(readDb(), run.id, 'status', { status: 'cancelled' }, 'warn');
-  deleteHandle(run.id);
-
+  updateRun(db, run.id, {
+    status: 'cancelled',
+    ended_at: iso(),
+    error: null,
+    failure_summary: null,
+    cancel_requested_at: iso(),
+    cancel_acknowledged_at: run.cancel_acknowledged_at || null
+  });
+  addEvent(db, run.id, 'status', { status: 'cancelled' }, 'warn');
   res.json({ ok: true, run_id: run.id });
 });
 
-app.post('/api/runs/:run_id/retry', requireAuth, async (req, res) => {
+app.post('/api/runs/:run_id/retry', requireApiAuth, async (req, res) => {
   const db = readDb();
-  const prev = db.runs.find(r => r.id === req.params.run_id);
+  const prev = getRun(db, req.params.run_id);
   if (!prev) return res.status(404).json({ error: 'Run not found' });
 
-  const active = db.runs.find(r => r.task_id === prev.task_id && ['queued', 'running'].includes(r.status));
+  const active = db.runs.find(r => r.task_id === prev.task_id && !isTerminalStatus(r.status));
   if (active) return res.status(409).json({ error: 'Task already has an active run', active_run_id: active.id });
 
+  const dispatchContext = buildDispatchContext(req.body);
   const run = {
     id: uid('run_'),
     task_id: prev.task_id,
@@ -481,38 +520,50 @@ app.post('/api/runs/:run_id/retry', requireAuth, async (req, res) => {
     output_tokens: 0,
     cost_estimate: 0,
     error: null,
-    source: 'retry'
+    failure_summary: null,
+    source: 'retry',
+    dispatch_context,
+    worker_message: '',
+    claim_deadline_at: iso(nowMs() + WORKER_CLAIM_TTL_MS),
+    claimed_at: null,
+    worker_id: null,
+    running_at: null,
+    heartbeat_at: null,
+    result: null,
+    cancel_requested_at: null,
+    cancel_acknowledged_at: null,
+    retried_from: prev.id
   };
+  run.worker_message = buildWorkerMessage(run);
 
   db.runs.unshift(run);
   writeDb(db);
-  addEvent(readDb(), run.id, 'status', { status: 'queued', retried_from: prev.id });
-  addEvent(readDb(), run.id, 'message', { text: 'Retry requested', previous_run_id: prev.id });
-  await adapter.dispatch(run, req.body);
+  addEvent(db, run.id, 'status', { status: 'queued', retried_from: prev.id });
+  addEvent(db, run.id, 'message', { text: 'Retry requested', previous_run_id: prev.id });
 
-  res.status(202).json({ run, retried_from: prev.id });
+  res.status(202).json({ run: enrichRun(run, getEventsForRun(db, run.id)), retried_from: prev.id });
 });
 
-app.get('/api/runs/:run_id', requireAuth, (req, res) => {
+app.get('/api/runs/:run_id', requireApiAuth, (req, res) => {
   const db = readDb();
-  const run = db.runs.find(r => r.id === req.params.run_id);
+  const run = getRun(db, req.params.run_id);
   if (!run) return res.status(404).json({ error: 'Run not found' });
-  const events = db.events.filter(e => e.run_id === run.id).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const events = getEventsForRun(db, run.id);
   res.json({ run: enrichRun(run, events), events });
 });
 
-app.get('/api/tasks/:id/runs', requireAuth, (req, res) => {
+app.get('/api/tasks/:id/runs', requireApiAuth, (req, res) => {
   const db = readDb();
   const runs = db.runs
     .filter(r => r.task_id === req.params.id)
     .sort((a, b) => (b.started_at || '').localeCompare(a.started_at || ''))
-    .map(run => enrichRun(run, db.events.filter(e => e.run_id === run.id)));
+    .map(run => enrichRun(run, getEventsForRun(db, run.id)));
   res.json({ runs });
 });
 
-app.get('/api/runs/:run_id/stream', requireAuth, (req, res) => {
+app.get('/api/runs/:run_id/stream', requireApiAuth, (req, res) => {
   const db = readDb();
-  const run = db.runs.find(r => r.id === req.params.run_id);
+  const run = getRun(db, req.params.run_id);
   if (!run) return res.status(404).end();
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -521,7 +572,7 @@ app.get('/api/runs/:run_id/stream', requireAuth, (req, res) => {
   res.flushHeaders?.();
 
   const lastId = req.header('Last-Event-ID') || req.query.lastEventId;
-  const events = db.events.filter(e => e.run_id === run.id).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const events = getEventsForRun(db, run.id);
   let replay = events;
   if (lastId) {
     const idx = events.findIndex(e => e.id === lastId);
@@ -543,7 +594,7 @@ app.get('/api/runs/:run_id/stream', requireAuth, (req, res) => {
   });
 });
 
-app.get('/api/activity/stream', requireAuth, (req, res) => {
+app.get('/api/activity/stream', requireApiAuth, (req, res) => {
   const db = readDb();
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -551,7 +602,7 @@ app.get('/api/activity/stream', requireAuth, (req, res) => {
   res.flushHeaders?.();
 
   const lastId = req.header('Last-Event-ID') || req.query.lastEventId;
-  const events = db.events.slice().sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const events = db.events.slice().sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
   let replay = events.slice(-40);
   if (lastId) {
     const idx = events.findIndex(e => e.id === lastId);
@@ -565,6 +616,176 @@ app.get('/api/activity/stream', requireAuth, (req, res) => {
     clearInterval(ping);
     sseActivityClients.delete(res);
   });
+});
+
+app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
+  const db = readDb();
+  const workerId = String(req.body?.worker_id || req.get('x-worker-id') || '').trim();
+  if (!workerId) return res.status(400).json({ error: 'worker_id is required' });
+
+  const now = nowMs();
+  const run = chooseClaimableRun(db, now);
+  if (!run) {
+    upsertWorker(db, workerId, {
+      last_heartbeat_at: iso(now),
+      last_seen_at: iso(now),
+      last_claim_at: null,
+      current_run_id: null,
+      host: req.body?.host || null,
+      pid: req.body?.pid || null
+    });
+    return res.status(204).end();
+  }
+
+  updateRun(db, run.id, {
+    status: 'claimed',
+    claimed_at: iso(now),
+    worker_id: workerId,
+    heartbeat_at: iso(now),
+    claim_deadline_at: null
+  });
+  upsertWorker(db, workerId, {
+    last_heartbeat_at: iso(now),
+    last_seen_at: iso(now),
+    last_claim_at: iso(now),
+    current_run_id: run.id,
+    host: req.body?.host || null,
+    pid: req.body?.pid || null
+  });
+  addEvent(db, run.id, 'status', { status: 'claimed', worker_id: workerId }, 'info');
+  addEvent(db, run.id, 'message', { text: 'Run claimed by worker', worker_id: workerId });
+
+  const refreshed = getRun(db, run.id);
+  res.json({
+    run: enrichRun(refreshed, getEventsForRun(db, run.id)),
+    worker_message: refreshed.worker_message,
+    openclaw_args: ['agent', '--json', '--message', refreshed.worker_message, ...(refreshed.agent_id ? ['--agent', refreshed.agent_id] : [])],
+    claim_ttl_ms: WORKER_CLAIM_TTL_MS,
+    heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS
+  });
+});
+
+app.post('/api/worker/runs/:run_id/events', requireWorkerAuth, (req, res) => {
+  const db = readDb();
+  const run = getRun(db, req.params.run_id);
+  if (!run) return res.status(404).json({ error: 'Run not found' });
+
+  const workerId = String(req.body?.worker_id || req.get('x-worker-id') || run.worker_id || '').trim();
+  if (workerId && run.worker_id && workerId !== run.worker_id) {
+    return res.status(409).json({ error: 'Run is owned by another worker' });
+  }
+  if (workerId && !run.worker_id) updateRun(db, run.id, { worker_id: workerId });
+
+  const events = Array.isArray(req.body?.events)
+    ? req.body.events
+    : req.body?.event
+      ? [req.body.event]
+      : [{ type: req.body?.type, payload: req.body?.payload, level: req.body?.level }];
+
+  const accepted = [];
+  for (const evt of events) {
+    if (!evt || !evt.type) continue;
+    accepted.push(applyWorkerEvent(db, getRun(db, run.id), { ...evt, worker_id: workerId || run.worker_id || null }));
+  }
+
+  updateRun(db, run.id, { heartbeat_at: iso() });
+  res.json({ ok: true, accepted: accepted.filter(Boolean).length });
+});
+
+app.post('/api/worker/runs/:run_id/complete', requireWorkerAuth, (req, res) => {
+  const db = readDb();
+  const run = getRun(db, req.params.run_id);
+  if (!run) return res.status(404).json({ error: 'Run not found' });
+
+  const workerId = String(req.body?.worker_id || req.get('x-worker-id') || run.worker_id || '').trim();
+  if (workerId && run.worker_id && workerId !== run.worker_id) {
+    return res.status(409).json({ error: 'Run is owned by another worker' });
+  }
+  if (workerId && !run.worker_id) updateRun(db, run.id, { worker_id: workerId });
+
+  const status = String(req.body?.status || 'success').trim();
+  if (!['success', 'failed', 'cancelled'].includes(status)) {
+    return res.status(400).json({ error: 'status must be success, failed, or cancelled' });
+  }
+
+  const finalStatus = run.status === 'cancelled' ? 'cancelled' : status;
+  const result = req.body?.result ?? null;
+  const error = req.body?.error ?? null;
+  const summary = req.body?.summary ?? null;
+  const metrics = req.body?.metrics ?? null;
+
+  if (metrics && typeof metrics === 'object') {
+    updateRun(db, run.id, {
+      input_tokens: typeof metrics.input_tokens === 'number' ? metrics.input_tokens : run.input_tokens,
+      output_tokens: typeof metrics.output_tokens === 'number' ? metrics.output_tokens : run.output_tokens,
+      cost_estimate: typeof metrics.cost_estimate === 'number' ? metrics.cost_estimate : run.cost_estimate
+    });
+  }
+
+  if (result !== null) updateRun(db, run.id, { result });
+  if (finalStatus === 'failed' || error) updateRun(db, run.id, { error: error || run.error || null, failure_summary: summary || error || run.failure_summary || null });
+
+  finalizeRun(db, run.id, finalStatus, {
+    error: finalStatus === 'failed' ? (error || summary || 'Worker reported failure') : null,
+    result,
+    worker_id: workerId || run.worker_id || null,
+    heartbeat_at: iso(),
+    failure_summary: summary || error || null
+  });
+
+  addEvent(db, run.id, 'status', { status: finalStatus, worker_id: workerId || run.worker_id || null }, finalStatus === 'success' ? 'info' : 'warn');
+  if (result !== null) {
+    addEvent(db, run.id, 'tool_result', { ok: finalStatus === 'success', result }, finalStatus === 'success' ? 'info' : 'warn');
+  }
+  if (error) {
+    addEvent(db, run.id, 'error', { message: error }, 'error');
+  }
+
+  const worker = workerId ? getWorker(db, workerId) : null;
+  if (worker) {
+    db.workers[workerId] = {
+      ...worker,
+      current_run_id: worker.current_run_id === run.id ? null : worker.current_run_id,
+      last_heartbeat_at: iso(),
+      updated_at: iso()
+    };
+    writeDb(db);
+  }
+
+  res.json({ ok: true, run_id: run.id, status: finalStatus });
+});
+
+app.post('/api/worker/heartbeat', requireWorkerAuth, (req, res) => {
+  const db = readDb();
+  const workerId = String(req.body?.worker_id || req.get('x-worker-id') || '').trim();
+  if (!workerId) return res.status(400).json({ error: 'worker_id is required' });
+
+  const heartbeatAt = iso();
+  const currentRunId = req.body?.current_run_id || null;
+  const host = req.body?.host || null;
+  const pid = req.body?.pid || null;
+  const worker = upsertWorker(db, workerId, {
+    last_heartbeat_at: heartbeatAt,
+    last_seen_at: heartbeatAt,
+    current_run_id: currentRunId,
+    host,
+    pid
+  });
+
+  const cancelled_run_ids = listCancelledRunsForWorker(db, workerId);
+  res.json({
+    ok: true,
+    worker,
+    cancelled_run_ids,
+    heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS,
+    heartbeat_ttl_ms: WORKER_HEARTBEAT_TTL_MS
+  });
+});
+
+app.get('/api/worker/status', requireWorkerAuth, (req, res) => {
+  const db = readDb();
+  const workers = Object.values(db.workers).sort((a, b) => (b.last_heartbeat_at || '').localeCompare(a.last_heartbeat_at || ''));
+  res.json({ workers });
 });
 
 app.listen(PORT, () => {

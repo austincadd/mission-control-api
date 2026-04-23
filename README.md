@@ -2,7 +2,7 @@
 
 Single-file frontend (`index.html`) + lightweight Node backend (`server.js`) for task execution runs with persistence + SSE streaming.
 
-## Run it
+## Run it locally
 
 ```bash
 cd /Users/austincaddell/.openclaw/workspace/projects/website_c88a201b/mission-control
@@ -11,15 +11,40 @@ npm run start
 # open http://localhost:8787
 ```
 
-Optional dev watch:
+## Worker mode
+
+Mission Control now uses an explicit worker protocol:
+
+- **Render / API host**: stores run state, streams SSE, and exposes worker endpoints
+- **Local worker**: the machine that actually runs `openclaw agent --json ...`
+
+Start the worker on the machine that has the OpenClaw CLI available:
 
 ```bash
-npm run dev
+npm run worker
 ```
 
-## Backend API
+## Architecture
 
-Implemented endpoints:
+- **Frontend**: `index.html`
+- **Backend API**: `server.js`
+- **Execution engine**: local worker process running the `openclaw` CLI
+- **Persistence**: local JSON files in `data/`
+  - `data/runs.json`
+- **Realtime updates**: Server-Sent Events (SSE)
+
+## Request flow
+
+1. The browser loads the UI.
+2. The UI sends HTTP requests to backend routes like `/api/tasks/:id/dispatch`.
+3. The backend creates a queued run record and waits for a worker claim.
+4. A worker on a real OpenClaw host claims the run, spawns `openclaw`, and posts events back.
+5. The backend appends those events and streams them to the UI over SSE.
+6. The UI renders those events into the task/run views.
+
+## Core routes
+
+### UI / run lifecycle
 
 - `POST /api/tasks/:id/dispatch`
 - `POST /api/runs/:run_id/cancel`
@@ -30,87 +55,70 @@ Implemented endpoints:
 - `GET /api/activity/stream` (global SSE)
 - `GET /api/config`
 
-Data persistence is local JSON in `data/runs.json`.
+### Worker protocol
 
-## Config / env
+- `POST /api/worker/claim`
+- `POST /api/worker/runs/:run_id/events`
+- `POST /api/worker/runs/:run_id/complete`
+- `POST /api/worker/heartbeat`
+- `GET /api/worker/status`
 
-Set via environment variables when starting backend:
+## Worker auth
 
-- `PORT` (default `8787`)
-- `OPENCLAW_URL` (default `http://localhost:3333`)
-- `OPENCLAW_TOKEN` (default empty)
-- `DEFAULT_MODEL` (default `anthropic/claude-haiku-4-5`)
-- `AUTO_TRANSITION_IN_PROGRESS` (`true`/`false`, default `true`)
-- `AUTO_TRANSITION_DONE` (`true`/`false`, default `true`)
+Set a shared secret for both the API and worker:
 
-Frontend settings page also stores:
+- `MISSION_CONTROL_API_TOKEN`
+- `MISSION_CONTROL_WORKER_TOKEN`
 
-- gateway URL
-- auth token
-- default model
-- auto status transitions
-
-## Keyboard shortcuts
-
-- `Cmd/Ctrl + K` : command palette shortcut hook
-- `C` : create quick task
-- `R` : run selected task (when task detail panel is open)
-- `Esc` : close detail panel
-
-## OpenClaw bridge status
-
-Backend now uses a real OpenClaw execution adapter via the local `openclaw` CLI.
-
-- ✅ Dispatch spawns an actual `openclaw agent --json` process
-- ✅ `run_id -> process handle` mapping persisted in `data/run-handles.json` for cancel/status continuity
-- ✅ Live process stdout/stderr is bridged into RunEvents (`stdout` + parsed `tool_call` hints)
-- ✅ Process lifecycle updates run status (`queued -> running -> success|failed|cancelled`)
-- ✅ Cancel uses real process termination (`SIGTERM`, escalates to `SIGKILL`)
-- ✅ Retry creates a new run and re-dispatches through the same adapter
-- ✅ Hermy path supported by passing `agent_id` (or `agent`) in dispatch payload
-
-### Real adapter run instructions
+Send it as:
 
 ```bash
-cd /Users/austincaddell/.openclaw/workspace/projects/website_c88a201b/mission-control
-npm install
-npm run start
+Authorization: Bearer <token>
 ```
 
-Optional env:
+## Env
 
-- `OPENCLAW_BIN` (default `openclaw`) – override CLI binary path
-- `OPENCLAW_AGENT_CHANNEL` (default unset) – optional channel override for `openclaw agent`
-- `DEFAULT_MODEL` (stored on run record; forwarded as metadata in prompt)
+- `PORT` (default `8787`)
+- `DEFAULT_MODEL` (default `openai-codex/gpt-5.3-codex`)
+- `AUTO_TRANSITION_IN_PROGRESS` (`true`/`false`, default `true`)
+- `AUTO_TRANSITION_DONE` (`true`/`false`, default `true`)
+- `MISSION_CONTROL_API_TOKEN` (optional; enables UI/API auth if set)
+- `MISSION_CONTROL_WORKER_TOKEN` (optional; enables worker auth if set)
+- `WORKER_CLAIM_TTL_MS` (default `30000`)
+- `WORKER_HEARTBEAT_INTERVAL_MS` (default `15000`)
+- `WORKER_HEARTBEAT_TTL_MS` (default `60000`)
+- `WORKER_SWEEP_INTERVAL_MS` (default `5000`)
+- `OPENCLAW_BIN` (worker only; default `openclaw`)
+- `OPENCLAW_AGENT_CHANNEL` (worker only; optional channel override)
+- `MISSION_CONTROL_URL` (worker only; default `http://127.0.0.1:8787`)
 
-Dispatch example (Hermy):
+## Dispatch example
 
 ```bash
 curl -sS -X POST http://localhost:8787/api/tasks/demo-dispatch/dispatch \
   -H 'Content-Type: application/json' \
   -d '{
     "agent_id": "hermy",
-    "model": "anthropic/claude-haiku-4-5",
+    "model": "openai-codex/gpt-5.3-codex",
     "task": "Say hello and summarize current status"
   }'
 ```
 
-Stream events:
+## Stream events
 
 ```bash
 curl -N http://localhost:8787/api/runs/<run_id>/stream
 ```
 
-Cancel:
+## Cancel
 
 ```bash
 curl -sS -X POST http://localhost:8787/api/runs/<run_id>/cancel
 ```
 
-## Known limitations
+## Notes
 
-- OpenClaw CLI currently does not expose a first-class `model` flag on `openclaw agent`; model is tracked in Mission Control and included in run prompt metadata.
-- Structured upstream tool events are surfaced opportunistically from process output (exact shape depends on CLI output mode).
-- If Mission Control restarts, running OpenClaw processes may continue independently; persisted PID mapping allows best-effort cancel but not full stream replay.
-- Board drag/drop and command palette are intentionally lightweight in this pass.
-- Frontend remains single-file for speed; modular split is recommended for long-term maintenance.
+- Runs are now honest: if no worker claims them before the claim TTL expires, they fail with `no_worker_available`.
+- If a worker disappears, stale claimed/running runs fail with `worker_disconnected`.
+- The backend no longer embeds a fake runner fallback.
+- Frontend is intentionally still single-file for speed.

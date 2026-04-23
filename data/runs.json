@@ -1,6 +1,247 @@
 {
   "runs": [
     {
+      "id": "run_gzptdlavkebsb",
+      "task_id": "launchd-smoke",
+      "agent_id": "hermy",
+      "status": "cancelled",
+      "model": "openai-codex/gpt-5.3-codex",
+      "started_at": "2026-04-23T14:16:14.891Z",
+      "ended_at": "2026-04-23T14:16:38.057Z",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_estimate": 0,
+      "error": null,
+      "failure_summary": null,
+      "source": "dispatch",
+      "dispatch_context": {
+        "task": "launchd smoke test",
+        "project": "Mission Control",
+        "context": "verify persistent worker",
+        "related_tasks": [],
+        "related_issues": [],
+        "agent": {
+          "id": "hermy"
+        }
+      },
+      "worker_message": "Mission Control run_id: run_gzptdlavkebsb\nTask ID: launchd-smoke\nRequested model: openai-codex/gpt-5.3-codex\nAssigned agent: hermy\n\nTask payload:\n{\n  \"task\": \"launchd smoke test\",\n  \"project\": \"Mission Control\",\n  \"related_tasks\": [],\n  \"related_issues\": [],\n  \"context\": \"verify persistent worker\"\n}",
+      "claim_deadline_at": null,
+      "claimed_at": "2026-04-23T14:16:14.908Z",
+      "worker_id": "worker-Austins-MBP.lan-26708",
+      "running_at": "2026-04-23T14:16:14.936Z",
+      "heartbeat_at": "2026-04-23T14:16:38.057Z",
+      "result": {
+        "exit_code": 0,
+        "signal": null,
+        "stdout_tail": [
+          "              \"name\": \"clawhub\",",
+          "              \"blockChars\": 429",
+          "            },",
+          "            {",
+          "              \"name\": \"coding-agent\",",
+          "              \"blockChars\": 829",
+          "            },",
+          "            {",
+          "              \"name\": \"gemini\",",
+          "              \"blockChars\": 218",
+          "            },",
+          "            {",
+          "              \"name\": \"gog\",",
+          "              \"blockChars\": 229",
+          "            },",
+          "            {",
+          "              \"name\": \"healthcheck\",",
+          "              \"blockChars\": 488",
+          "            },",
+          "            {",
+          "              \"name\": \"mcporter\",",
+          "              \"blockChars\": 327",
+          "            },",
+          "            {",
+          "              \"name\": \"node-connect\",",
+          "              \"blockChars\": 538",
+          "            },",
+          "            {",
+          "              \"name\": \"obsidian\",",
+          "              \"blockChars\": 242",
+          "            },",
+          "            {",
+          "              \"name\": \"skill-creator\",",
+          "              \"blockChars\": 756",
+          "            },",
+          "            {",
+          "              \"name\": \"summarize\",",
+          "              \"blockChars\": 293",
+          "            },",
+          "            {",
+          "              \"name\": \"things-mac\",",
+          "              \"blockChars\": 433",
+          "            },",
+          "            {",
+          "              \"name\": \"weather\",",
+          "              \"blockChars\": 413",
+          "            },",
+          "            {",
+          "              \"name\": \"xurl\",",
+          "              \"blockChars\": 384",
+          "            },",
+          "            {",
+          "              \"name\": \"self-improvement\",",
+          "              \"blockChars\": 633",
+          "            },",
+          "            {",
+          "              \"name\": \"bluehost-deploy\",",
+          "              \"blockChars\": 373",
+          "            },",
+          "            {",
+          "              \"name\": \"context-checkpoint\",",
+          "              \"blockChars\": 446",
+          "            },",
+          "            {",
+          "              \"name\": \"interaction-design\",",
+          "              \"blockChars\": 295",
+          "            },",
+          "            {",
+          "              \"name\": \"no-stall\",",
+          "              \"blockChars\": 826",
+          "            },",
+          "            {",
+          "              \"name\": \"skill-validation-protocol\",",
+          "              \"blockChars\": 428",
+          "            },",
+          "            {",
+          "              \"name\": \"web-design-guidelines\",",
+          "              \"blockChars\": 296",
+          "            }",
+          "          ]",
+          "        },",
+          "        \"tools\": {",
+          "          \"listChars\": 1979,",
+          "          \"schemaChars\": 8265,",
+          "          \"entries\": [",
+          "            {",
+          "              \"name\": \"read\",",
+          "              \"summaryChars\": 298,",
+          "              \"schemaChars\": 392,",
+          "              \"propertiesCount\": 4",
+          "            },",
+          "            {",
+          "              \"name\": \"edit\",",
+          "              \"summaryChars\": 129,",
+          "              \"schemaChars\": 591,",
+          "              \"propertiesCount\": 6",
+          "            },",
+          "            {",
+          "              \"name\": \"write\",",
+          "              \"summaryChars\": 127,",
+          "              \"schemaChars\": 313,",
+          "              \"propertiesCount\": 3",
+          "            },",
+          "            {",
+          "              \"name\": \"exec\",",
+          "              \"summaryChars\": 181,",
+          "              \"schemaChars\": 1086,",
+          "              \"propertiesCount\": 12",
+          "            },",
+          "            {",
+          "              \"name\": \"process\",",
+          "              \"summaryChars\": 85,",
+          "              \"schemaChars\": 961,",
+          "              \"propertiesCount\": 12",
+          "            },",
+          "            {",
+          "              \"name\": \"cron\",",
+          "              \"summaryChars\": 2689,",
+          "              \"schemaChars\": 690,",
+          "              \"propertiesCount\": 13",
+          "            },",
+          "            {",
+          "              \"name\": \"sessions_list\",",
+          "              \"summaryChars\": 54,",
+          "              \"schemaChars\": 212,",
+          "              \"propertiesCount\": 4",
+          "            },",
+          "            {",
+          "              \"name\": \"sessions_history\",",
+          "              \"summaryChars\": 36,",
+          "              \"schemaChars\": 161,",
+          "              \"propertiesCount\": 3",
+          "            },",
+          "            {",
+          "              \"name\": \"sessions_send\",",
+          "              \"summaryChars\": 84,",
+          "              \"schemaChars\": 273,",
+          "              \"propertiesCount\": 5",
+          "            },",
+          "            {",
+          "              \"name\": \"sessions_yield\",",
+          "              \"summaryChars\": 97,",
+          "              \"schemaChars\": 60,",
+          "              \"propertiesCount\": 1",
+          "            },",
+          "            {",
+          "              \"name\": \"sessions_spawn\",",
+          "              \"summaryChars\": 198,",
+          "              \"schemaChars\": 1179,",
+          "              \"propertiesCount\": 17",
+          "            },",
+          "            {",
+          "              \"name\": \"subagents\",",
+          "              \"summaryChars\": 105,",
+          "              \"schemaChars\": 191,",
+          "              \"propertiesCount\": 4",
+          "            },",
+          "            {",
+          "              \"name\": \"session_status\",",
+          "              \"summaryChars\": 207,",
+          "              \"schemaChars\": 89,",
+          "              \"propertiesCount\": 2",
+          "            },",
+          "            {",
+          "              \"name\": \"web_search\",",
+          "              \"summaryChars\": 175,",
+          "              \"schemaChars\": 1084,",
+          "              \"propertiesCount\": 9",
+          "            },",
+          "            {",
+          "              \"name\": \"web_fetch\",",
+          "              \"summaryChars\": 129,",
+          "              \"schemaChars\": 374,",
+          "              \"propertiesCount\": 3",
+          "            },",
+          "            {",
+          "              \"name\": \"image\",",
+          "              \"summaryChars\": 260,",
+          "              \"schemaChars\": 342,",
+          "              \"propertiesCount\": 6",
+          "            },",
+          "            {",
+          "              \"name\": \"memory_search\",",
+          "              \"summaryChars\": 334,",
+          "              \"schemaChars\": 139,",
+          "              \"propertiesCount\": 3",
+          "            },",
+          "            {",
+          "              \"name\": \"memory_get\",",
+          "              \"summaryChars\": 151,",
+          "              \"schemaChars\": 128,",
+          "              \"propertiesCount\": 3",
+          "            }",
+          "          ]",
+          "        }",
+          "      },",
+          "      \"stopReason\": \"stop\"",
+          "    }",
+          "  }",
+          "}"
+        ],
+        "stderr_tail": [],
+        "cancelled": false
+      },
+      "cancel_requested_at": "2026-04-23T14:16:24.306Z",
+      "cancel_acknowledged_at": null
+    },
+    {
       "id": "run_tztydiye3nio5",
       "task_id": "live-test-1776804717",
       "agent_id": "main",
@@ -8248,6 +8489,4019 @@
         "status": "cancelled"
       },
       "level": "warn"
+    },
+    {
+      "id": "evt_s4zk33iqkebsf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:14.895Z",
+      "type": "status",
+      "payload": {
+        "status": "queued",
+        "auto_transition_in_progress": true
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lm5s3aymkebsh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:14.897Z",
+      "type": "message",
+      "payload": {
+        "text": "Dispatch accepted",
+        "context": {
+          "task": "launchd smoke test",
+          "project": "Mission Control",
+          "context": "verify persistent worker",
+          "related_tasks": [],
+          "related_issues": [],
+          "agent": {
+            "id": "hermy"
+          }
+        }
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_y8zb0cf8kebt0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:14.916Z",
+      "type": "status",
+      "payload": {
+        "status": "claimed",
+        "worker_id": "worker-Austins-MBP.lan-26708"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mjrmcad9kebt2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:14.918Z",
+      "type": "message",
+      "payload": {
+        "text": "Run claimed by worker",
+        "worker_id": "worker-Austins-MBP.lan-26708"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nx4c4aq8kebth",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:14.933Z",
+      "type": "status",
+      "payload": {
+        "status": "running",
+        "worker_id": "worker-Austins-MBP.lan-26708"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hjo6838jkej1x",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:24.309Z",
+      "type": "status",
+      "payload": {
+        "status": "cancelled"
+      },
+      "level": "warn"
+    },
+    {
+      "id": "evt_cmadk37xkeqt2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.358Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "{"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ld6eo2sikeqtl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.377Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "  \"runId\": \"55a024cb-3b45-4483-abb3-abfd04d47804\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_d2gvm1jckeqtx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.389Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "  \"status\": \"ok\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_40yd93nskequ8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.400Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "  \"summary\": \"completed\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p9csmd2qkequg",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.408Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "  \"result\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fz75k3h5kequv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.423Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "    \"payloads\": ["
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_n221sl9vkeqv5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.433Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_j8tszw9ckeqve",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.442Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"text\": \"Received — launchd smoke test is queued correctly.\\n\\n- **run_id:** `run_gzptdlavkebsb`\\n- **task_id:** `launchd-smoke`\\n- **project:** `Mission Control`\\n- **agent/model:** `hermy` / `openai-codex/gpt-5.3-codex`\\n- **context:** verify persistent worker\\n\\nDispatch format looks healthy end-to-end.\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kdkm8b2zkeqvn",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.451Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"mediaUrl\": null"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ec6ntjiqkeqvu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.458Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bnu8tn9ekeqw4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.468Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "    ],"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wctr81ibkeqwc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.476Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "    \"meta\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_c5eqjtrskeqwk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.484Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      \"durationMs\": 7312,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ai4s4fvxkeqwt",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.493Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      \"agentMeta\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_grlkzdtbkeqx5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.505Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"sessionId\": \"45a7d6e0-d484-4aa8-8371-f7b099a6d8c3\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_7cpxk1opkeqxc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.512Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"provider\": \"openai-codex\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_rj9qvafhkeqxk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.520Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"model\": \"gpt-5.3-codex\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_zwco9vtnkeqxu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.530Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"usage\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_779ysytfkeqy3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.539Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"input\": 9450,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_8ca1x41lkeqyc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.548Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"output\": 118,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_x26upnrgkeqyk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.556Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"cacheRead\": 3584,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_4mwn5rv7keqys",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.564Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"total\": 13152"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tgpb2w2okeqz0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.572Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_roa6qj93keqzb",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.583Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"lastCallUsage\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6fpt5g7tkeqzk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.592Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"input\": 9450,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_oe5j2px6keqzu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.602Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"output\": 118,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_v20chy7rker03",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.611Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"cacheRead\": 3584,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kys6gs1pker0b",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.619Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"cacheWrite\": 0,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xfoozn4iker0k",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.628Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"total\": 13152"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2un7x9f9ker0u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.638Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bfvzsukwker13",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.647Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"promptTokens\": 13034"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_eqevcszmker1b",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.655Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wsmwxl4gker1l",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.665Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      \"aborted\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cd6b3bxoker1v",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.675Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      \"systemPromptReport\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_r9veqadkker24",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.684Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"source\": \"run\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_1r0etqu2ker2d",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.693Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"generatedAt\": 1776953786835,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p146on3yker2m",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.702Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"sessionId\": \"45a7d6e0-d484-4aa8-8371-f7b099a6d8c3\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9xo80lrdker2u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.710Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"sessionKey\": \"agent:hermy:main\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_g2okkwknker34",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.720Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"provider\": \"openai-codex\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_eeo5mce3ker3d",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.729Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"model\": \"gpt-5.3-codex\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ts7hmsknker3n",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.739Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"workspaceDir\": \"/Users/austincaddell/.openclaw/workspace\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kmrvkc21ker3x",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.749Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"bootstrapMaxChars\": 20000,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_14qpesjfker47",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.759Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"bootstrapTotalMaxChars\": 150000,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_92n1mo0iker4i",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.770Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"bootstrapTruncation\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cwwysn6bker4s",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.780Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"warningMode\": \"once\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_8l03iacvker51",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.789Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"warningShown\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_y8dybzg1ker5a",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.798Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"truncatedFiles\": 0,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_res4eyzkker5k",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.808Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"nearLimitFiles\": 0,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mwrmp8uxker5u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.818Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"totalNearLimit\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_eccrkp1oker64",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.828Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6548zzbqker6e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.838Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"sandbox\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mivg29ujker6o",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.848Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"mode\": \"off\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9lznwn63ker6y",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.858Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"sandboxed\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_5r7v21ppker78",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.868Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_vsc50s4jker7g",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.876Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"systemPrompt\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3yq7spw6ker7s",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.888Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"chars\": 40344,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_iu2cn6o4ker81",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.897Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"projectContextChars\": 21467,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6jgcf0a1ker8b",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.907Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"nonProjectContextChars\": 18877"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fk6swgk6ker8l",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.917Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_crfgdqwvker8u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.926Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"injectedWorkspaceFiles\": ["
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_vx9nhi0hker95",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.937Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wbmssd1eker9f",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.947Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"AGENTS.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_orogqi9pker9p",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.957Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/AGENTS.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tlw2y661ker9z",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.967Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_27iq4e9ckera8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.976Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 4757,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6znd86qzkerai",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.986Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 4757,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_okxj1izbkeras",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:34.996Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_vt18fdfxkerb2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.006Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_1qxk1fznkerbd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.017Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mqdf3n1ykerbm",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.026Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"SOUL.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ncjz2ldxkerbw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.036Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/SOUL.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dvalb7oxkerc7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.047Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_5tv35dj3kerch",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.057Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 2180,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sbcdpevzkercr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.067Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 2180,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xm95vif6kerd0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.076Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lm0peimikerda",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.086Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pqiu9yt2kerdl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.097Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dx69fu0rkerdv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.107Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"TOOLS.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_q6w3je7nkere5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.117Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/TOOLS.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sf28nj6rkeree",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.126Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_68seup9zkeren",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.135Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 8628,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6aapjkupkerex",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.145Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 8628,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6wezr865kerf7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.155Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0u7ldnfykerfj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.167Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bjzp5amgkerft",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.177Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xv3liuhokerg3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.187Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"IDENTITY.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_4ap5vi42kergd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.197Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/IDENTITY.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hfp71knrkergm",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.206Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_7z8348ipkergx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.217Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 175,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_56tzzas9kerh7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.227Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 175,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_51r4iv5ekerhi",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.238Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pw43uhmakerhs",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.248Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dy2whzw2keri0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.256Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_qrxr3dyfkeria",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.266Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"USER.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_h4n6w7shkerik",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.276Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/USER.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_u8pcswqwkerix",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.289Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_m7wja327kerj8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.300Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 541,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_az83ptm6kerjh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.309Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 541,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hrbkg7nzkerjs",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.320Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hmja6fxbkerk1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.329Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_prkr074ikerkc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.340Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pekcceuzkerkl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.349Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"HEARTBEAT.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hxzjjz4lkerku",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.358Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/HEARTBEAT.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cwpwt2a8kerl4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.368Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_b3rs1gyykerle",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.378Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 742,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_jn2d9flmkerlq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.390Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 742,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3xw2dinhkerm1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.401Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dr8e375fkerm9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.409Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_v23ja54bkermk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.420Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nf3nlumbkermu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.430Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"BOOTSTRAP.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_30v37sevkern5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.441Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/BOOTSTRAP.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_h3318sokkerne",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.450Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": true,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_rekcmjzukerno",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.460Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 0,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_16kfd1x1kernz",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.471Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 76,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fj2wjwlfkero9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.481Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mhg86xc9keroi",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.490Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_7zgqjwjrkeros",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.500Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_1fkxbzn5kerp2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.510Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"name\": \"MEMORY.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6bvu4oihkerpd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.521Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"path\": \"/Users/austincaddell/.openclaw/workspace/MEMORY.md\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0rq8rbp4kerpo",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.532Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"missing\": false,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fdf5ekuvkerpx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.541Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"rawChars\": 3702,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0qcs5aqskerq8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.552Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"injectedChars\": 3702,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wpw7mdfbkerqh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.561Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            \"truncated\": false"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_56y6trwgkerqq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.570Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hd75m3o8kerr0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.580Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        ],"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nk7kg32ekerr9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.589Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"skills\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_glojs5rxkerrl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.601Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"promptChars\": 9650,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6c4ius5jkerrv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.611Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"entries\": ["
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_etiaa6udkers6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.622Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tm99p30hkersh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.633Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"1password\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2k21alhfkersr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.643Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 345"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_jgrekx42kert2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.654Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0sfd2pvykertd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.665Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sram67pwkertm",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.674Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"clawhub\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9k6eei7dkertx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.685Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 429"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ts018vpukeru6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.694Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_piiy2cdvkeruf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.703Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0h9ipr7akerup",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.713Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"coding-agent\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_14v7a8shkeruz",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.723Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 829"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ex11o043kerva",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.734Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_55i90kp2kervj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.743Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_92mg1nixkervv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.755Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"gemini\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_862n4n8rkerw7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.767Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 218"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_5gfz7wqtkerwg",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.776Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ikc0ubhbkerwq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.786Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nz2ery1tkerwz",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.795Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"gog\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_jz40vdf9kerx9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.805Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 229"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_jd35w009kerxj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.815Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nu2mem5qkerxv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.827Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0khbytb2kery7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.839Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"healthcheck\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kmoourtckeryh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.849Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 488"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_gg8vvpgwkerys",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.860Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lzmsnbzfkerz3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.871Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bo0fw0opkerzf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.883Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"mcporter\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_qboly4hjkerzo",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.892Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 327"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_uhgpmsafkerzz",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.903Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_f539kx40kes0a",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.914Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ndggsraskes0j",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.923Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"node-connect\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xg2lngstkes0w",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.936Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 538"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_m8b8076tkes17",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.947Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_zvpcfhzokes1i",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.958Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_gpgr74ekkes1u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.970Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"obsidian\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_l7nh9ycbkes24",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.980Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 242"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cs3shtlzkes2g",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:35.992Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_rec15x34kes2q",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.002Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_vspiqynqkes31",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.013Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"skill-creator\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tzclpinvkes3b",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.023Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 756"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mmx1i992kes3m",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.034Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_nihc39uvkes3y",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.046Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pktr4y3gkes4a",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.058Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"summarize\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p5tolemxkes4k",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.068Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 293"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_f5lhssfykes4u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.078Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bl8he6lrkes56",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.090Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_58rgjj1hkes5j",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.103Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"things-mac\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_63yo7572kes5s",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.112Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 433"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mqjqfk6xkes62",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.122Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_958g0dx9kes6e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.134Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_y8th9er8kes6o",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.144Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"weather\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ef037fdfkes71",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.157Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 413"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ru4dhqkkkes7c",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.168Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_19vr77kzkes7m",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.178Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fzhccgaukes7x",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.189Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"xurl\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_55cklogjkes89",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.201Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 384"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3ts2ggtgkes8l",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.213Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_1ccmx270kes8w",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.224Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_k75uvew4kes98",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.236Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"self-improvement\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_q3wa9504kes9j",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.247Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 633"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_j6x6hl8rkes9u",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.258Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2rwc91gkkesa6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.270Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_1k4jjyiwkesai",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.282Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"bluehost-deploy\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_qh7mnyu8kesas",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.292Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 373"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9bd708dlkesb4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.304Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hh8go7m1kesbg",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.316Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_e9uql48ikesbs",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.328Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"context-checkpoint\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_jgj3i0utkesc3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.339Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 446"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pycbmfdskesce",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.350Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pybq1dtbkesco",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.360Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_zn4usjbkkescy",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.370Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"interaction-design\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xe19kwh9kesda",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.382Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 295"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_r8nvtscskesdl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.393Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_0thv5bb1kesdx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.405Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lfxemcs0kese9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.417Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"no-stall\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6j5f2efmkesek",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.428Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 826"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tdker7u3kesex",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.441Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_q8rvgfo9kesf9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.453Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3ym7ykbpkesfl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.465Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"skill-validation-protocol\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_d1i2voklkesfv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.475Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 428"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2hr89go0kesg7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.487Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_o5lq3r9hkesgj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.499Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_aeoc9gctkesgt",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.509Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"web-design-guidelines\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mxdkq986kesh5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.521Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"blockChars\": 296"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_j1qvv114keshg",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.532Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_28tze127keshq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.542Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          ]"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lmfe29r9kesi3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.555Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cojy48chkesif",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.567Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        \"tools\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2pao6mmakesiq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.578Z",
+      "type": "tool_call",
+      "payload": {
+        "stream": "stdout",
+        "raw": "        \"tools\": {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hdb52lgnkesj2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.590Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"listChars\": 1979,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_v8d7v1b0kesjg",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.604Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"schemaChars\": 8265,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ad7n4aufkesjs",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.616Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          \"entries\": ["
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_da3glr9wkesk3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.627Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ptpvpzk1keskf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.639Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"read\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_l9g1z1bukeskr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.651Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 298,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9qwheisukesl4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.664Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 392,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_4n0lblmekeslf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.675Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 4"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_uems7cgskeslr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.687Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hidsr386kesm4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.700Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_uxge2h0gkesmf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.711Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"edit\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_s4u3z8gykesmq",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.722Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 129,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_otsx0wrnkesn1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.733Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 591,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ue9fu8agkesnc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.744Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 6"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dtsp93vekesno",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.756Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9hlhbdqikeso0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.768Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_edpreycrkesoc",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.780Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"write\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_azsltsy3kesop",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.793Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 127,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_r7699nmgkesp1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.805Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 313,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_gn2i2kn4kespd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.817Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 3"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pyhxleqlkespp",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.829Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hlly3t30kesq1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.841Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tfojzexqkesqe",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.854Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"exec\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ksv7af4ekesqp",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.865Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 181,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_y6azwt22kesr0",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.876Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 1086,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_i5pqj2y1kesrd",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.889Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 12"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_av54skplkesro",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.900Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_eakwicnvkesry",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.910Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sfykq8xokess9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.921Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"process\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_qjyt6g1rkessj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.931Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 85,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_rtmm1qnpkessu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.942Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 961,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_qtl1s12gkest7",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.955Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 12"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ndvpz2sskestk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.968Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_owyqe27jkestv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.979Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_dq6pqeahkesu6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:36.990Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"cron\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_fjset3kzkesuj",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.003Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 2689,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6tpvmgi7kesuv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.015Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 690,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ddm06osmkesv6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.026Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 13"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wvqz0wbtkesvi",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.038Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_7y4srdkdkesvv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.051Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_9jyvi4hokesw6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.062Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"sessions_list\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_rwwx2660keswh",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.073Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 54,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_8cwxejipkeswu",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.086Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 212,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_zmsxb6p6kesx6",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.098Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 4"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_n5mqmbs5kesxk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.112Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_84xa91lckesxw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.124Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p4376411kesy9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.137Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"sessions_history\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_x8o5oshtkesyl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.149Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 36,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_hqbe9regkesyw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.160Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 161,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_c5ptrz4xkesz9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.173Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 3"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pv1l9atokeszl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.185Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_75qowvi5keszv",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.195Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ox1sa7ltket06",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.206Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"sessions_send\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_6tvsydjfket0i",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.218Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 84,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_a8uib8mwket0w",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.232Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 273,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_m2cwijafket18",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.244Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 5"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_e9h9b0kiket1q",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.262Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_x43sck4xket21",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.273Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ye8uvi51ket2e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.286Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"sessions_yield\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kigbj1zkket2p",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.297Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 97,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_8f21ns8jket31",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.309Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 60,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_vwe5p1zbket3e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.322Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 1"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_8vxt8sduket3q",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.334Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tqjm220lket41",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.345Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_teei58j6ket4c",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.356Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"sessions_spawn\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_srvuqs6pket4p",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.369Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 198,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3mfy9xdtket52",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.382Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 1179,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_pmhzbkflket5d",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.393Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 17"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_681dl3gvket5p",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.405Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_k2h7a6akket62",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.418Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_56r5w0d4ket6d",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.429Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"subagents\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_4j0ke552ket6n",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.439Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 105,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sc6hl4jdket6z",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.451Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 191,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_o85zboreket7a",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.462Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 4"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p9mv7gewket7m",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.474Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_oxcvfgneket82",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.490Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_mp3w48shket8e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.502Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"session_status\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_k943gshwket8q",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.514Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 207,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_xhk1rrh6ket91",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.525Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 89,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_z56n28jpket9e",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.538Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 2"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lhtrfpejket9r",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.551Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_7c5seblkketa3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.563Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_yg8vrtcpketag",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.576Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"web_search\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cmu6daxlketat",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.589Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 175,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_lemxpbxkketb8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.604Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 1084,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tfuufowaketbl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.617Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 9"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ddp1xc4bketbw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.628Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ky8lwvueketc8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.640Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_a57wcrowketck",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.652Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"web_fetch\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_2r10iiibketcx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.665Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 129,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_objmlowhketd8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.676Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 374,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_gh9yyucdketdl",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.689Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 3"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_evohyg98ketdz",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.703Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ldut0uw7ketee",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.718Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_oep1aawjketer",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.731Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"image\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_kzlot7apketf1",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.741Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 260,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_tb1v6imhketff",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.755Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 342,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ykryb0utketfr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.767Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 6"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_x7lkq7phketg2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.778Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_avve2r5sketge",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.790Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p1gaakkaketgp",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.801Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"memory_search\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_p0gevsy2keth2",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.814Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 334,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_q9p6p7v5kethf",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.827Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 139,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_e7y50k1ukethr",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.839Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 3"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ug2pkixrketi4",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.852Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_v35ul4xlketig",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.864Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            {"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_antvikyaketis",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.876Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"name\": \"memory_get\","
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_b2uckhddketj5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.889Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"summaryChars\": 151,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_s2sqgq10ketji",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.902Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"schemaChars\": 128,"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_469v6c8iketju",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.914Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "              \"propertiesCount\": 3"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_g5tveq6qketk5",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.925Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "            }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_3m8u9yhrketkk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.940Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "          ]"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_bnw7tfb6ketkx",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.953Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "        }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_sp2dyumdketld",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.969Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      },"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ekiy3yd1ketlw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:37.988Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "      \"stopReason\": \"stop\""
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_df101oqaketm9",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.001Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "    }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_h8po5yx7ketmk",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.012Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "  }"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_cop2v6pgketmw",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.024Z",
+      "type": "stdout",
+      "payload": {
+        "stream": "stdout",
+        "line": "}"
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_wzm1ivvtketn8",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.036Z",
+      "type": "tool_result",
+      "payload": {
+        "ok": true,
+        "command_exit_code": 0,
+        "signal": null
+      },
+      "level": "info"
+    },
+    {
+      "id": "evt_ljylh66fketny",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.062Z",
+      "type": "status",
+      "payload": {
+        "status": "cancelled",
+        "worker_id": "worker-Austins-MBP.lan-26708"
+      },
+      "level": "warn"
+    },
+    {
+      "id": "evt_ntf6hkwrketo3",
+      "run_id": "run_gzptdlavkebsb",
+      "timestamp": "2026-04-23T14:16:38.067Z",
+      "type": "tool_result",
+      "payload": {
+        "ok": false,
+        "result": {
+          "exit_code": 0,
+          "signal": null,
+          "stdout_tail": [
+            "              \"name\": \"clawhub\",",
+            "              \"blockChars\": 429",
+            "            },",
+            "            {",
+            "              \"name\": \"coding-agent\",",
+            "              \"blockChars\": 829",
+            "            },",
+            "            {",
+            "              \"name\": \"gemini\",",
+            "              \"blockChars\": 218",
+            "            },",
+            "            {",
+            "              \"name\": \"gog\",",
+            "              \"blockChars\": 229",
+            "            },",
+            "            {",
+            "              \"name\": \"healthcheck\",",
+            "              \"blockChars\": 488",
+            "            },",
+            "            {",
+            "              \"name\": \"mcporter\",",
+            "              \"blockChars\": 327",
+            "            },",
+            "            {",
+            "              \"name\": \"node-connect\",",
+            "              \"blockChars\": 538",
+            "            },",
+            "            {",
+            "              \"name\": \"obsidian\",",
+            "              \"blockChars\": 242",
+            "            },",
+            "            {",
+            "              \"name\": \"skill-creator\",",
+            "              \"blockChars\": 756",
+            "            },",
+            "            {",
+            "              \"name\": \"summarize\",",
+            "              \"blockChars\": 293",
+            "            },",
+            "            {",
+            "              \"name\": \"things-mac\",",
+            "              \"blockChars\": 433",
+            "            },",
+            "            {",
+            "              \"name\": \"weather\",",
+            "              \"blockChars\": 413",
+            "            },",
+            "            {",
+            "              \"name\": \"xurl\",",
+            "              \"blockChars\": 384",
+            "            },",
+            "            {",
+            "              \"name\": \"self-improvement\",",
+            "              \"blockChars\": 633",
+            "            },",
+            "            {",
+            "              \"name\": \"bluehost-deploy\",",
+            "              \"blockChars\": 373",
+            "            },",
+            "            {",
+            "              \"name\": \"context-checkpoint\",",
+            "              \"blockChars\": 446",
+            "            },",
+            "            {",
+            "              \"name\": \"interaction-design\",",
+            "              \"blockChars\": 295",
+            "            },",
+            "            {",
+            "              \"name\": \"no-stall\",",
+            "              \"blockChars\": 826",
+            "            },",
+            "            {",
+            "              \"name\": \"skill-validation-protocol\",",
+            "              \"blockChars\": 428",
+            "            },",
+            "            {",
+            "              \"name\": \"web-design-guidelines\",",
+            "              \"blockChars\": 296",
+            "            }",
+            "          ]",
+            "        },",
+            "        \"tools\": {",
+            "          \"listChars\": 1979,",
+            "          \"schemaChars\": 8265,",
+            "          \"entries\": [",
+            "            {",
+            "              \"name\": \"read\",",
+            "              \"summaryChars\": 298,",
+            "              \"schemaChars\": 392,",
+            "              \"propertiesCount\": 4",
+            "            },",
+            "            {",
+            "              \"name\": \"edit\",",
+            "              \"summaryChars\": 129,",
+            "              \"schemaChars\": 591,",
+            "              \"propertiesCount\": 6",
+            "            },",
+            "            {",
+            "              \"name\": \"write\",",
+            "              \"summaryChars\": 127,",
+            "              \"schemaChars\": 313,",
+            "              \"propertiesCount\": 3",
+            "            },",
+            "            {",
+            "              \"name\": \"exec\",",
+            "              \"summaryChars\": 181,",
+            "              \"schemaChars\": 1086,",
+            "              \"propertiesCount\": 12",
+            "            },",
+            "            {",
+            "              \"name\": \"process\",",
+            "              \"summaryChars\": 85,",
+            "              \"schemaChars\": 961,",
+            "              \"propertiesCount\": 12",
+            "            },",
+            "            {",
+            "              \"name\": \"cron\",",
+            "              \"summaryChars\": 2689,",
+            "              \"schemaChars\": 690,",
+            "              \"propertiesCount\": 13",
+            "            },",
+            "            {",
+            "              \"name\": \"sessions_list\",",
+            "              \"summaryChars\": 54,",
+            "              \"schemaChars\": 212,",
+            "              \"propertiesCount\": 4",
+            "            },",
+            "            {",
+            "              \"name\": \"sessions_history\",",
+            "              \"summaryChars\": 36,",
+            "              \"schemaChars\": 161,",
+            "              \"propertiesCount\": 3",
+            "            },",
+            "            {",
+            "              \"name\": \"sessions_send\",",
+            "              \"summaryChars\": 84,",
+            "              \"schemaChars\": 273,",
+            "              \"propertiesCount\": 5",
+            "            },",
+            "            {",
+            "              \"name\": \"sessions_yield\",",
+            "              \"summaryChars\": 97,",
+            "              \"schemaChars\": 60,",
+            "              \"propertiesCount\": 1",
+            "            },",
+            "            {",
+            "              \"name\": \"sessions_spawn\",",
+            "              \"summaryChars\": 198,",
+            "              \"schemaChars\": 1179,",
+            "              \"propertiesCount\": 17",
+            "            },",
+            "            {",
+            "              \"name\": \"subagents\",",
+            "              \"summaryChars\": 105,",
+            "              \"schemaChars\": 191,",
+            "              \"propertiesCount\": 4",
+            "            },",
+            "            {",
+            "              \"name\": \"session_status\",",
+            "              \"summaryChars\": 207,",
+            "              \"schemaChars\": 89,",
+            "              \"propertiesCount\": 2",
+            "            },",
+            "            {",
+            "              \"name\": \"web_search\",",
+            "              \"summaryChars\": 175,",
+            "              \"schemaChars\": 1084,",
+            "              \"propertiesCount\": 9",
+            "            },",
+            "            {",
+            "              \"name\": \"web_fetch\",",
+            "              \"summaryChars\": 129,",
+            "              \"schemaChars\": 374,",
+            "              \"propertiesCount\": 3",
+            "            },",
+            "            {",
+            "              \"name\": \"image\",",
+            "              \"summaryChars\": 260,",
+            "              \"schemaChars\": 342,",
+            "              \"propertiesCount\": 6",
+            "            },",
+            "            {",
+            "              \"name\": \"memory_search\",",
+            "              \"summaryChars\": 334,",
+            "              \"schemaChars\": 139,",
+            "              \"propertiesCount\": 3",
+            "            },",
+            "            {",
+            "              \"name\": \"memory_get\",",
+            "              \"summaryChars\": 151,",
+            "              \"schemaChars\": 128,",
+            "              \"propertiesCount\": 3",
+            "            }",
+            "          ]",
+            "        }",
+            "      },",
+            "      \"stopReason\": \"stop\"",
+            "    }",
+            "  }",
+            "}"
+          ],
+          "stderr_tail": [],
+          "cancelled": false
+        }
+      },
+      "level": "warn"
     }
-  ]
+  ],
+  "workers": {
+    "worker-Austins-MBP.lan-26708": {
+      "id": "worker-Austins-MBP.lan-26708",
+      "connected_at": "2026-04-23T14:15:22.540Z",
+      "last_heartbeat_at": "2026-04-23T14:18:19.650Z",
+      "last_seen_at": "2026-04-23T14:18:19.650Z",
+      "current_run_id": null,
+      "host": "Austins-MBP.lan",
+      "pid": 26708,
+      "updated_at": "2026-04-23T14:18:19.650Z",
+      "last_claim_at": null
+    },
+    "worker-Austins-MBP.lan-26968": {
+      "id": "worker-Austins-MBP.lan-26968",
+      "connected_at": "2026-04-23T14:18:21.695Z",
+      "last_heartbeat_at": "2026-04-23T14:42:30.641Z",
+      "last_seen_at": "2026-04-23T14:42:30.641Z",
+      "current_run_id": null,
+      "host": "Austins-MBP.lan",
+      "pid": 26968,
+      "updated_at": "2026-04-23T14:42:30.641Z",
+      "last_claim_at": null
+    }
+  }
 }
