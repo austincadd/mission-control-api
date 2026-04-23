@@ -77,9 +77,18 @@ async function probeOpenClaw() {
   return { ok: true, reason: null, details: { version: versionProbe.stdout, help: helpProbe.stdout } };
 }
 
+function normalizeOpenClawAgentId(agentId) {
+  const value = String(agentId || '').trim().toLowerCase();
+  if (!value) return null;
+  if (value === 'guy' || value === 'main') return 'main';
+  if (value === 'hermy') return 'hermy';
+  return null;
+}
+
 function buildOpenClawArgs(run, workerMessage) {
-  const args = ['agent', '--json', '--message', workerMessage];
-  args.push('--agent', run.agent_id || OPENCLAW_DEFAULT_AGENT);
+  const agentId = normalizeOpenClawAgentId(run.agent_id) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
+  const args = ['agent', '--json', '--session-id', run.id, '--message', workerMessage];
+  if (agentId) args.push('--agent', agentId);
   if (OPENCLAW_CHANNEL) args.push('--channel', OPENCLAW_CHANNEL);
   return args;
 }

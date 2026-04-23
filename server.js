@@ -216,6 +216,14 @@ function buildDispatchContext(body = {}) {
   };
 }
 
+function normalizeOpenClawAgentId(agentId) {
+  const value = String(agentId || '').trim().toLowerCase();
+  if (!value) return null;
+  if (value === 'guy' || value === 'main') return 'main';
+  if (value === 'hermy') return 'hermy';
+  return null;
+}
+
 function buildWorkerMessage(run) {
   const dispatchContext = run.dispatch_context || {};
   return [
@@ -755,10 +763,11 @@ app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
 
   const refreshed = getRun(db, run.id);
   const workerMessage = refreshed.worker_message || buildWorkerMessage(refreshed);
+  const normalizedAgent = normalizeOpenClawAgentId(refreshed.agent_id) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
   res.json({
     run: compactRun(refreshed, getEventsForRun(db, run.id)),
     worker_message: workerMessage,
-    openclaw_args: ['agent', '--json', '--message', workerMessage, ...(refreshed.agent_id ? ['--agent', refreshed.agent_id] : [])],
+    openclaw_args: ['agent', '--json', '--session-id', refreshed.id, '--message', workerMessage, ...(normalizedAgent ? ['--agent', normalizedAgent] : [])],
     claim_ttl_ms: WORKER_CLAIM_TTL_MS,
     heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS
   });
