@@ -153,11 +153,31 @@ function computeFailureSummary(run, events) {
   );
 }
 
-function enrichRun(run, events = null) {
+function compactRun(run, events = null) {
   const resolvedEvents = events || getEventsForRun(readDb(), run.id);
   return {
-    ...run,
-    failure_summary: computeFailureSummary(run, resolvedEvents)
+    id: run.id,
+    task_id: run.task_id,
+    agent_id: run.agent_id || null,
+    status: run.status,
+    model: run.model || DEFAULT_MODEL,
+    source: run.source || null,
+    started_at: run.started_at || null,
+    ended_at: run.ended_at || null,
+    input_tokens: typeof run.input_tokens === 'number' ? run.input_tokens : 0,
+    output_tokens: typeof run.output_tokens === 'number' ? run.output_tokens : 0,
+    cost_estimate: typeof run.cost_estimate === 'number' ? run.cost_estimate : 0,
+    error: run.error || null,
+    failure_summary: computeFailureSummary(run, resolvedEvents),
+    claim_deadline_at: run.claim_deadline_at || null,
+    claimed_at: run.claimed_at || null,
+    worker_id: run.worker_id || null,
+    running_at: run.running_at || null,
+    heartbeat_at: run.heartbeat_at || null,
+    result: run.result ?? null,
+    cancel_requested_at: run.cancel_requested_at || null,
+    cancel_acknowledged_at: run.cancel_acknowledged_at || null,
+    retried_from: run.retried_from || null
   };
 }
 
@@ -478,7 +498,7 @@ app.post('/api/tasks/:id/dispatch', requireApiAuth, async (req, res) => {
     context: dispatchContext
   });
 
-  res.status(202).json({ run: enrichRun(run, getEventsForRun(db, run.id)) });
+  res.status(202).json({ run: compactRun(run, getEventsForRun(db, run.id)) });
 });
 
 app.post('/api/runs/:run_id/cancel', requireApiAuth, async (req, res) => {
@@ -541,7 +561,7 @@ app.post('/api/runs/:run_id/retry', requireApiAuth, async (req, res) => {
   addEvent(db, run.id, 'status', { status: 'queued', retried_from: prev.id });
   addEvent(db, run.id, 'message', { text: 'Retry requested', previous_run_id: prev.id });
 
-  res.status(202).json({ run: enrichRun(run, getEventsForRun(db, run.id)), retried_from: prev.id });
+  res.status(202).json({ run: compactRun(run, getEventsForRun(db, run.id)), retried_from: prev.id });
 });
 
 app.get('/api/runs/:run_id', requireApiAuth, (req, res) => {
@@ -549,7 +569,7 @@ app.get('/api/runs/:run_id', requireApiAuth, (req, res) => {
   const run = getRun(db, req.params.run_id);
   if (!run) return res.status(404).json({ error: 'Run not found' });
   const events = getEventsForRun(db, run.id);
-  res.json({ run: enrichRun(run, events), events });
+  res.json({ run: compactRun(run, events), events });
 });
 
 app.get('/api/tasks/:id/runs', requireApiAuth, (req, res) => {
@@ -557,7 +577,7 @@ app.get('/api/tasks/:id/runs', requireApiAuth, (req, res) => {
   const runs = db.runs
     .filter(r => r.task_id === req.params.id)
     .sort((a, b) => (b.started_at || '').localeCompare(a.started_at || ''))
-    .map(run => enrichRun(run, getEventsForRun(db, run.id)));
+    .map(run => compactRun(run, getEventsForRun(db, run.id)));
   res.json({ runs });
 });
 
@@ -579,7 +599,7 @@ app.get('/api/runs/:run_id/stream', requireApiAuth, (req, res) => {
     replay = idx >= 0 ? events.slice(idx + 1) : events;
   }
   replay.forEach(evt => sendSse(res, 'run_event', evt, evt.id));
-  sendSse(res, 'run_snapshot', { run: enrichRun(run, events) }, `snap_${Date.now()}`);
+  sendSse(res, 'run_snapshot', { run: compactRun(run, events) }, `snap_${Date.now()}`);
 
   const set = sseRunClients.get(run.id) || new Set();
   set.add(res);
@@ -656,10 +676,11 @@ app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
   addEvent(db, run.id, 'message', { text: 'Run claimed by worker', worker_id: workerId });
 
   const refreshed = getRun(db, run.id);
+  const workerMessage = refreshed.worker_message || buildWorkerMessage(refreshed);
   res.json({
-    run: enrichRun(refreshed, getEventsForRun(db, run.id)),
-    worker_message: refreshed.worker_message,
-    openclaw_args: ['agent', '--json', '--message', refreshed.worker_message, ...(refreshed.agent_id ? ['--agent', refreshed.agent_id] : [])],
+    run: compactRun(refreshed, getEventsForRun(db, run.id)),
+    worker_message: workerMessage,
+    openclaw_args: ['agent', '--json', '--message', workerMessage, ...(refreshed.agent_id ? ['--agent', refreshed.agent_id] : [])],
     claim_ttl_ms: WORKER_CLAIM_TTL_MS,
     heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS
   });
