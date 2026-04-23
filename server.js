@@ -10,7 +10,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'runs.json');
 
 const PORT = Number(process.env.PORT || 8787);
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'openai-codex/gpt-5.3-codex';
+const DEFAULT_MODEL = (process.env.DEFAULT_MODEL || 'openai-codex/gpt-5.3-codex').replace(/^openai-coded\//, 'openai-codex/');
 const AUTO_TRANSITION_IN_PROGRESS = (process.env.AUTO_TRANSITION_IN_PROGRESS || 'true') === 'true';
 const AUTO_TRANSITION_DONE = (process.env.AUTO_TRANSITION_DONE || 'true') === 'true';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://austincaddell.dev')

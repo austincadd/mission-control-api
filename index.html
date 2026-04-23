@@ -73,10 +73,33 @@ state.settings=state.settings||{};
 if(!state.settings.gatewayUrl||/localhost:8787|tail147c60\.ts\.net/.test(String(state.settings.gatewayUrl))){state.settings.gatewayUrl=DEFAULT_GATEWAY;}
 if(!state.settings.defaultModel||state.settings.defaultModel==='anthropic/claude-haiku-4-5'){state.settings.defaultModel=DEFAULT_MODEL;}
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const gatewayCandidates=()=>{
+ const primary=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
+ return [primary,...FALLBACK_GATEWAYS.filter(Boolean)]
+  .map(u=>String(u).replace(/\/$/,'').trim())
+  .filter((u,i,arr)=>u&&arr.indexOf(u)===i);
+};
 save();
 
 const api={
- async req(path,opt={}){const r=await fetch((state.settings.gatewayUrl||'').replace(/\/$/,'')+path,{...opt,headers:{'Content-Type':'application/json',...(state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{})}});if(!r.ok)throw new Error(await r.text());return r.json()},
+ async req(path,opt={}){
+  const headers={
+   'Content-Type':'application/json',
+   ...(state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{})
+  };
+  const gateways=gatewayCandidates();
+  let lastErr=null;
+  for(const base of gateways){
+   try{
+    const r=await fetch(base+path,{...opt,headers});
+    if(!r.ok) throw new Error(await r.text());
+    return r.json();
+   }catch(err){
+    lastErr=err;
+   }
+  }
+  throw lastErr || new Error('Backend unreachable');
+ },
  dispatch(task,payload){return this.req(`/api/tasks/${task.id}/dispatch`,{method:'POST',body:JSON.stringify(payload)})},
  cancel(runId){return this.req(`/api/runs/${runId}/cancel`,{method:'POST'})},
  retry(runId,payload){return this.req(`/api/runs/${runId}/retry`,{method:'POST',body:JSON.stringify(payload||{})})},
@@ -91,14 +114,18 @@ async function probeGateway(){
  if(nowMs-lastProbeAt<7000) return;
  lastProbeAt=nowMs;
  if(badge) badge.textContent='Backend: checking...';
- const base=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
- try{
-  const r=await fetch(base+'/api/config',{headers:state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{}});
-  if(r.ok){
-   if(badge) badge.textContent='Backend: connected';
-   return true;
-  }
- }catch{}
+ const headers=state.settings.authToken?{'Authorization':'Bearer '+state.settings.authToken}:{};
+ for(const base of gatewayCandidates()){
+  try{
+   const r=await fetch(base.replace(/\/$/,'')+'/api/config',{headers});
+   if(r.ok){
+    state.settings.gatewayUrl=base.replace(/\/$/,'');
+    save();
+    if(badge) badge.textContent=`Backend: connected (${new URL(base).hostname})`;
+    return true;
+   }
+  }catch{}
+ }
  if(badge) badge.textContent='Backend: offline';
  return false;
 }
@@ -108,7 +135,8 @@ let activityStream=null, activityLastEventId=''; let activityBackoff=1000;
 
 function connectRunStream(runId){
  if(runStream) runStream.close(); if(!runId) return;
- const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/runs/${runId}/stream`); if(runLastEventId) u.searchParams.set('lastEventId',runLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
+ const base=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
+ const u=new URL(base+`/api/runs/${runId}/stream`); if(runLastEventId) u.searchParams.set('lastEventId',runLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
  runStream=new EventSource(u.toString()); runStreamCtx=runId;
  runStream.addEventListener('run_event',e=>{runLastEventId=e.lastEventId||runLastEventId;const evt=JSON.parse(e.data);ingestRunEvent(evt,true)});
  runStream.addEventListener('run_snapshot',e=>{const snap=JSON.parse(e.data);if(snap.run){state.runCache[snap.run.id]={...(state.runCache[snap.run.id]||{}),run:snap.run};save();if(panelActiveTaskId()) openTask(panelActiveTaskId());}});
@@ -117,7 +145,8 @@ function connectRunStream(runId){
 }
 function connectActivity(){
  if(activityStream) activityStream.close();
- const u=new URL((state.settings.gatewayUrl||'http://localhost:8787').replace(/\/$/,'')+`/api/activity/stream`); if(activityLastEventId) u.searchParams.set('lastEventId',activityLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
+ const base=(state.settings.gatewayUrl||DEFAULT_GATEWAY).replace(/\/$/,'');
+ const u=new URL(base+`/api/activity/stream`); if(activityLastEventId) u.searchParams.set('lastEventId',activityLastEventId); if(state.settings.authToken) u.searchParams.set('token',state.settings.authToken);
  activityStream=new EventSource(u.toString());
  activityStream.addEventListener('activity',e=>{activityLastEventId=e.lastEventId||activityLastEventId;const evt=JSON.parse(e.data);state.activity.unshift(evt);state.activity=state.activity.slice(0,80);save();if(state.selectedTab==='Overview') render();if(panelActiveTaskId()) openTask(panelActiveTaskId());});
  activityStream.onerror=()=>{activityStream.close();setTimeout(connectActivity,activityBackoff);activityBackoff=Math.min(activityBackoff*1.8,15000)};
@@ -185,7 +214,7 @@ function renderSettings(){
  <div id='settingsStatus' class='muted'></div>
  </div>`;
  el('saveSettings').onclick=()=>{state.settings.gatewayUrl=el('setGateway').value.trim()||DEFAULT_GATEWAY;state.settings.authToken=el('setToken').value.trim();state.settings.defaultModel=el('setModel').value.trim()||DEFAULT_MODEL;state.settings.autoTodoToInProgress=el('setTodo').checked;state.settings.autoDoneOnSuccess=el('setDone').checked;save();toast('Settings saved');connectActivity();probeGateway();};
- el('testBackend').onclick=async()=>{try{const cfg=await api.req('/api/config');el('settingsStatus').textContent=`Connected. default_model=${cfg.default_model}`;}catch(err){el('settingsStatus').textContent='Backend not reachable: '+err.message;}};
+ el('testBackend').onclick=async()=>{try{const cfg=await api.req('/api/config');el('settingsStatus').textContent=`Connected. default_model=${cfg.default_model}`;probeGateway();}catch(err){el('settingsStatus').textContent='Backend not reachable: '+err.message;}};
  el('resetSettings').onclick=()=>{state.settings.gatewayUrl=DEFAULT_GATEWAY;state.settings.authToken='';state.settings.defaultModel=DEFAULT_MODEL;state.settings.autoTodoToInProgress=true;state.settings.autoDoneOnSuccess=true;save();toast('Reset to defaults');render();};
 }
 
