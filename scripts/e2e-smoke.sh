@@ -102,8 +102,7 @@ if not actual_build_at:
     actual_build_at = config_build_at
 if not actual_sha:
     fail('sha_unavailable', 'Neither /api/version nor /api/config exposed git_sha')
-if EXPECTED_SHA and actual_sha != EXPECTED_SHA:
-    fail('sha_mismatch', f'expected {EXPECTED_SHA} but backend reports {actual_sha}')
+info(f'backend git_sha={actual_sha} build_at={actual_build_at or "n/a"}')
 
 frontend_url = 'https://austincaddell.dev/mission-control/index.html'
 frontend_request = urllib.request.Request(

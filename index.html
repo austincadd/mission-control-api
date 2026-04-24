@@ -328,14 +328,28 @@ function bindTaskPanel(task,latest){
 }
 
 async function dispatchTask(task){
+ if(state.settings.autoTodoToInProgress&&task.status==='Todo') task.status='In Progress';
+ const proj=project();
+ const agent=state.agents.find(a=>a.id===task.assigned_agent_id)||null;
+ const related_tasks=state.tasks.filter(t=>t.project_id===task.project_id&&t.id!==task.id).slice(0,4);
+ let out;
  try{
-  if(state.settings.autoTodoToInProgress&&task.status==='Todo') task.status='In Progress';
-  const project=project();
-  const agent=state.agents.find(a=>a.id===task.assigned_agent_id)||null;
-  const related_tasks=state.tasks.filter(t=>t.project_id===task.project_id&&t.id!==task.id).slice(0,4);
-  const out=await api.dispatch(task,{task,project,agent,related_tasks,related_issues:[],model:state.settings.defaultModel,agent_id:task.assigned_agent_id});
-  state.runCache[out.run.id]={run:out.run,events:[]}; save(); toast('Run dispatched'); render(); openTask(task.id); connectRun(out.run.id);
- }catch(err){toast('Dispatch failed (maybe already active)');}
+  out=await api.dispatch(task,{task,project:proj,agent,related_tasks,related_issues:[],model:state.settings.defaultModel,agent_id:task.assigned_agent_id});
+ }catch(err){
+  console.error('Dispatch failed:',err);
+  toast('Dispatch failed: task may already be active or backend rejected the request');
+  return;
+ }
+ try{
+  state.runCache[out.run.id]={run:out.run,events:[]};
+  save();
+  toast('Run dispatched');
+  render();
+  openTask(task.id);
+  connectRun(out.run.id);
+ }catch(err){
+  console.error('Post-dispatch UI update failed:',err);
+ }
 }
 
 async function refreshTaskRuns(taskId){try{const rr=await api.runs(taskId);rr.runs.forEach(r=>state.runCache[r.id]={run:{...(state.runCache[r.id]?.run||{}),...r},events:state.runCache[r.id]?.events||[]});save();render();if(panelActiveTaskId()===taskId) openTask(taskId)}catch{}}
