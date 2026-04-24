@@ -43,3 +43,13 @@ This file tracks known gaps that were deliberately deferred in the recent audit 
 - **Reference:** `index.html:211-229`
 - **Why deferred:** The fallback logic already exists for API requests; SSE handling was not expanded in this cycle.
 - **Priority:** low
+
+## 8. Frontend deploys are manual with no git sync
+- **Description:** The frontend lives at `/home2/cvywazmy/public_html/website_c88a201b/mission-control/index.html` on Bluehost and is updated via manual SCP. There is no CI, no automated deploy, and no check that the live file matches the repo’s `index.html`. If someone (or you, months from now) commits frontend changes and forgets to SCP, the repo will show the fix as shipped but the live site won’t have it — and there’s no alerting for the drift.
+- **Reference:** Live Bluehost deployment path and manual upload workflow
+- **Why deferred:** Operational landmine, but not actively broken.
+- **Future fixes to note:**
+  - Add a `tools/deploy-frontend.sh` script that SCPs the current repo `index.html` and logs the SHA to a deploy manifest
+  - Or add a `/frontend-version` meta tag to `index.html` that the backend’s smoke test or a separate check could compare against repo HEAD
+  - Or migrate frontend to a platform with git-based deploys (Netlify, Cloudflare Pages, Render static site) if that fits the project
+- **Priority:** medium
