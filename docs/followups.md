@@ -50,7 +50,7 @@ This file tracks known gaps that were deliberately deferred in the recent audit 
 - **Why deferred:** Operational landmine, but not actively broken.
 - **Realized on 2026-04-24:** This gap caused a live-site failure. The deployed `health-proxy.php` on Bluehost was an older version than the repo (hardcoded `/api/config`, ignored the `path` param), and `.htaccess` was missing entirely. Symptoms were `Backend: degraded` on the live site, `/mission-control/api/*` returning portfolio HTML, and CSP blocking Render SSE. Fixed by redeploying the proxy and adding `.htaccess` back.
 - **Implemented 2026-04-24:** Option 1 is now in place via `tools/deploy-frontend.sh` and `npm run deploy-frontend`. It SCPs `index.html` and `health-proxy.php`, prints the git SHA, and refuses dirty trees.
+- **Implemented 2026-04-24:** Option 2 is now in place via the smoke test's frontend SHA check. The live Bluehost page must include the injected `frontend-sha` marker or smoke fails with `frontend_stale`.
 - **Remaining open work:**
-  - Add drift detection to the smoke test (Option 2)
   - Consider migrating to git-based hosting (Option 3) if the project outgrows Bluehost
 - **Priority:** medium-high

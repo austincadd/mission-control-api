@@ -4,6 +4,7 @@ set -euo pipefail
 python3 - <<'PY'
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -11,7 +12,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
-BASE_URL = os.getenv('MISSION_CONTROL_BASE_URL', 'https://mission-control-api-mo8l.onrender.com').rstrip('/')
+BASE_URL = os.getenv('MISSION_CONTROL_BASE_URL') or os.getenv('API_BASE') or 'https://mission-control-api-mo8l.onrender.com'
+BASE_URL = BASE_URL.rstrip('/')
 API_TOKEN = os.getenv('MISSION_CONTROL_API_TOKEN') or os.getenv('API_TOKEN') or os.getenv('OPENCLAW_TOKEN') or ''
 EXPECTED_SHA = os.getenv('EXPECTED_SHA') or ''
 POLL_INTERVAL = float(os.getenv('SMOKE_POLL_INTERVAL', '2'))
@@ -102,6 +104,32 @@ if not actual_sha:
     fail('sha_unavailable', 'Neither /api/version nor /api/config exposed git_sha')
 if EXPECTED_SHA and actual_sha != EXPECTED_SHA:
     fail('sha_mismatch', f'expected {EXPECTED_SHA} but backend reports {actual_sha}')
+
+frontend_url = 'https://austincaddell.dev/mission-control/index.html'
+frontend_request = urllib.request.Request(
+    f'{frontend_url}?smoke={int(time.time())}',
+    headers={
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache, no-store, max-age=0',
+        'Pragma': 'no-cache',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    },
+)
+try:
+    with urllib.request.urlopen(frontend_request, timeout=HTTP_TIMEOUT) as resp:
+        frontend_html = resp.read().decode('utf-8', 'replace')
+except Exception as e:
+    fail('frontend_fetch_failed', f'GET {frontend_url} failed: {e}')
+frontend_match = re.search(r'<!--\s*frontend-sha:\s*([0-9a-fA-F]{7,40})\s*-->', frontend_html)
+if not frontend_match:
+    frontend_match = re.search(r'<meta\s+name=["\']frontend-sha["\']\s+content=["\']([^"\']+)["\']\s*/?>', frontend_html, re.I)
+if not frontend_match:
+    fail('frontend_stale', 'Live frontend is missing the frontend SHA marker')
+frontend_sha = frontend_match.group(1).strip()
+if EXPECTED_SHA and frontend_sha != EXPECTED_SHA:
+    fail('frontend_stale', f'expected {EXPECTED_SHA} but frontend reports {frontend_sha}')
 
 # Worker health
 worker_code, worker_text = request('GET', '/api/worker/status')
