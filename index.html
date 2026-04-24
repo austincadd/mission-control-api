@@ -61,12 +61,13 @@ const toast=(m)=>{const t=el('toast');t.textContent=m;t.classList.add('show');se
 const el=id=>document.getElementById(id);
 
 const seed=()=>{
- const a1={id:uid(),name:'Alex',avatar:'A',color:'#5e86ff',model:'gpt-5.3-codex',status:'Available'};
- const a2={id:uid(),name:'Mira',avatar:'M',color:'#a66bff',model:'claude',status:'Busy'};
+ const a1={id:'guy',name:'Guy',avatar:'G',color:'#5e86ff',model:'gpt-5.3-codex',status:'Available'};
+ const a2={id:'main',name:'Main',avatar:'M',color:'#a66bff',model:'claude',status:'Busy'};
+ const a3={id:'hermy',name:'Hermy',avatar:'H',color:'#31c48d',model:'gpt-5.3-codex',status:'Available'};
  const p1={id:uid(),name:'Mission Control UI',icon:'🚀',status:'Active',priority:'High',description:'Execution layer integration'};
  const t1={id:'demo-task',project_id:p1.id,title:'Wire execution layer',description:'Connect runs to backend + SSE',status:'Todo',priority:'High',assigned_agent_id:a1.id,due_date:null,labels:['execution'],activity:[{at:now(),text:'Seed task'}]};
- const t2={id:uid(),project_id:p1.id,title:'Refine mobile UX',description:'Polish responsive details',status:'In Progress',priority:'Medium',assigned_agent_id:a2.id,due_date:null,labels:['mobile'],activity:[{at:now(),text:'Seed task'}]};
- return {version:3,theme:'dark',nav:'projects',selectedProjectId:p1.id,selectedTab:'Tasks',itemView:'list',sort:{key:'priority',dir:'desc'},filters:{search:'',status:'All',priority:'All',agent:'All'},projects:[p1],tasks:[t1,t2],issues:[],agents:[a1,a2],settings:{gatewayUrl:DEFAULT_GATEWAY,authToken:'',defaultModel:DEFAULT_MODEL,autoTodoToInProgress:true,autoDoneOnSuccess:true},runCache:{},activity:[]};
+ const t2={id:uid(),project_id:p1.id,title:'Refine mobile UX',description:'Polish responsive details',status:'In Progress',priority:'Medium',assigned_agent_id:a3.id,due_date:null,labels:['mobile'],activity:[{at:now(),text:'Seed task'}]};
+ return {version:3,theme:'dark',nav:'projects',selectedProjectId:p1.id,selectedTab:'Tasks',itemView:'list',sort:{key:'priority',dir:'desc'},filters:{search:'',status:'All',priority:'All',agent:'All'},projects:[p1],tasks:[t1,t2],issues:[],agents:[a1,a2,a3],settings:{gatewayUrl:DEFAULT_GATEWAY,authToken:'',defaultModel:DEFAULT_MODEL,autoTodoToInProgress:true,autoDoneOnSuccess:true},runCache:{},activity:[]};
 };
 let state=(()=>{try{return JSON.parse(localStorage.getItem(KEY))||seed()}catch{return seed()}})();
 if(!state.version||state.version<3) state=seed();
