@@ -40,7 +40,7 @@
     <div class="top">
       <div class="row space"><div id="titleWrap" style="font-weight:650"></div><div class="row"><button id="themeBtn">🌙 Dark</button><button id="openSettings">⚙️ Settings</button><button id="quickCreate">+ Create (C)</button></div></div>
       <div class="tabs" id="tabs"></div>
-      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><button id="resetReconnectBtn">Reset & Reconnect</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
+      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><button id="resetConnectionBtn">Reset connection only</button><button id="resetEverythingBtn">Reset everything</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
     </div>
     <section id="content" class="content"></section>
   </main>
@@ -342,21 +342,34 @@ async function refreshTaskRuns(taskId){try{const rr=await api.runs(taskId);rr.ru
 function panelActiveTaskId(){return el('detailPanel').dataset.taskId||null}
 function closePanel(){el('detailPanel').classList.remove('open');el('overlay').classList.remove('show');el('detailPanel').innerHTML='';el('detailPanel').dataset.taskId='';if(runStream){runStream.close();runStream=null;}}
 
-function resetAndReconnect(){
+function closeLiveStreams(){
+ if(runStream){runStream.close();runStream=null;}
+ if(activityStream){activityStream.close();activityStream=null;}
+}
+
+function resetConnectionOnly(){
+ runLastEventId='';
+ activityLastEventId='';
+ lastProbeAt=0;
+ state.settings=state.settings||{};
+ state.settings.gatewayUrl=DEFAULT_GATEWAY;
+ save();
+ toast('Connection reset');
+ render();
+ connectActivity();
+ probeGateway(true);
+}
+
+function resetEverything(){
+ if(!confirm('Reset everything? This will delete projects, tasks, and saved settings.')) return;
  const preservedTheme=state.theme;
  try{localStorage.removeItem(KEY);}catch{}
  state=seed();
  state.theme=preservedTheme;
- state.settings.gatewayUrl=DEFAULT_GATEWAY;
- state.settings.authToken='';
- state.settings.defaultModel=DEFAULT_MODEL;
- state.settings.autoTodoToInProgress=true;
- state.settings.autoDoneOnSuccess=true;
  runLastEventId='';
  activityLastEventId='';
  lastProbeAt=0;
- if(runStream){runStream.close();runStream=null;}
- if(activityStream){activityStream.close();activityStream=null;}
+ closeLiveStreams();
  save();
  toast('State reset');
  render();
@@ -397,7 +410,8 @@ function bindTop(){
  el('quickCreate').onclick=()=>{const p=project();if(!p)return;const t={id:uid(),project_id:p.id,title:'New Task',description:'',status:'Todo',priority:'No priority',assigned_agent_id:null,due_date:null,labels:[],activity:[{at:now(),text:'Created'}]};state.tasks.unshift(t);save();render();openTask(t.id)};
  el('navProjects').onclick=()=>{state.nav='projects';save();render()}; el('navAgents').onclick=()=>{state.nav='agents';save();render()};
  el('toggleView').onclick=()=>toast('Board view kept lightweight in this pass');
- el('resetReconnectBtn').onclick=resetAndReconnect;
+ el('resetConnectionBtn').onclick=resetConnectionOnly;
+ el('resetEverythingBtn').onclick=resetEverything;
 }
 
 document.addEventListener('click',e=>{
