@@ -30,9 +30,16 @@ tmp_dir="$(mktemp -d)"
 tmp_index="$tmp_dir/index.html"
 trap 'rm -rf "$tmp_dir"' EXIT
 
+mkdir -p .deploy
+if ! printf '%s\n' "$SHA_FULL" > .deploy/frontend-sha; then
+  echo "Failed to write .deploy/frontend-sha" >&2
+  exit 1
+fi
+
 cat index.html > "$tmp_index"
 printf '\n<!-- frontend-sha: %s -->\n' "$SHA_FULL" >> "$tmp_index"
 
 echo "Deploying ${SHA_SHORT} to ${REMOTE_TARGET}:${REMOTE_DIR}"
 scp -i "$SSH_KEY" -o BatchMode=yes "$tmp_index" health-proxy.php "$REMOTE_TARGET:$REMOTE_DIR/"
 echo "Deployed ${SHA_SHORT} to Bluehost"
+echo "Remember to commit .deploy/frontend-sha before treating the frontend SHA as authoritative."

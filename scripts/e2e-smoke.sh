@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
 python3 - <<'PY'
 import json
 import os
@@ -11,6 +14,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 
 BASE_URL = os.getenv('MISSION_CONTROL_BASE_URL') or os.getenv('API_BASE') or 'https://mission-control-api-mo8l.onrender.com'
 BASE_URL = BASE_URL.rstrip('/')
@@ -75,6 +79,37 @@ def iso_age_seconds(iso: str) -> float:
     return (datetime.now(timezone.utc) - dt).total_seconds()
 
 
+ROOT_DIR = Path.cwd()
+
+
+def read_tracked_sha(rel_path: str) -> str:
+    try:
+        return (ROOT_DIR / rel_path).read_text(encoding='utf-8').strip()
+    except Exception:
+        return ''
+
+
+def resolve_expected_sha(rel_path: str) -> str:
+    tracked = read_tracked_sha(rel_path)
+    if tracked:
+        return tracked
+    if EXPECTED_SHA:
+        return EXPECTED_SHA
+    try:
+        return subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    except Exception:
+        return ''
+
+
+EXPECTED_BACKEND_SHA = resolve_expected_sha('.deploy/backend-sha')
+EXPECTED_FRONTEND_SHA = resolve_expected_sha('.deploy/frontend-sha')
+failures = []
+
+
+def record_failure(code: str, message: str) -> None:
+    failures.append((code, message))
+
+
 # Version / config
 version_code, version_text = request('GET', '/api/version', auth=False)
 actual_sha = ''
@@ -103,6 +138,8 @@ if not actual_build_at:
 if not actual_sha:
     fail('sha_unavailable', 'Neither /api/version nor /api/config exposed git_sha')
 info(f'backend git_sha={actual_sha} build_at={actual_build_at or "n/a"}')
+if EXPECTED_BACKEND_SHA and actual_sha != EXPECTED_BACKEND_SHA:
+    record_failure('backend_stale', f'expected {EXPECTED_BACKEND_SHA} but backend reports {actual_sha}')
 
 frontend_url = 'https://austincaddell.dev/mission-control/index.html'
 frontend_request = urllib.request.Request(
@@ -127,8 +164,13 @@ if not frontend_match:
 if not frontend_match:
     fail('frontend_stale', 'Live frontend is missing the frontend SHA marker')
 frontend_sha = frontend_match.group(1).strip()
-if EXPECTED_SHA and frontend_sha != EXPECTED_SHA:
-    fail('frontend_stale', f'expected {EXPECTED_SHA} but frontend reports {frontend_sha}')
+if EXPECTED_FRONTEND_SHA and frontend_sha != EXPECTED_FRONTEND_SHA:
+    record_failure('frontend_stale', f'expected {EXPECTED_FRONTEND_SHA} but frontend reports {frontend_sha}')
+
+if failures:
+    for code, message in failures:
+        print(f'SMOKE_FAIL code={code} {message}', file=sys.stderr)
+    sys.exit(1)
 
 # Worker health
 worker_code, worker_text = request('GET', '/api/worker/status')

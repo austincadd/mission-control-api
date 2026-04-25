@@ -1,12 +1,41 @@
-# Launchd wrappers
+# Mission Control deploy workflow
 
-These are the live launchd wrapper scripts for Mission Control.
+## Tracked deploy SHAs
 
-The files under `~/.openclaw/workspace/tools/` are symlinks to this directory, so edit the copies here and the changes will be picked up on the next launchd restart.
+- `.deploy/backend-sha` — last backend deploy SHA
+- `.deploy/frontend-sha` — last frontend deploy SHA
 
-`bluehost-root.htaccess` is a captured copy of the live Bluehost `.htaccess` as of 2026-04-24. It was manually deployed to Bluehost, and any edits to the live file must be SCP'd back up after updating this copy in repo.
+Keep both files committed. Smoke compares each live surface against its own tracked SHA.
 
-Frontend deploys now use `npm run deploy-frontend` (backed by `tools/deploy-frontend.sh`). That script SCPs `index.html` and `health-proxy.php` to Bluehost, prints the git SHA, and refuses to run on a dirty tree. Use it instead of ad-hoc manual SCPs.
+## Frontend deploy
 
-After any frontend deploy, run the smoke test immediately after:
-`npm run deploy-frontend && EXPECTED_SHA=$(git rev-parse HEAD) API_BASE=https://mission-control-api-mo8l.onrender.com npm run smoke`
+1. Make your frontend change.
+2. Run:
+
+```bash
+npm run deploy-frontend
+```
+
+3. Commit the updated `.deploy/frontend-sha` file.
+
+## Backend deploy
+
+1. Push the backend change to `main`.
+2. Wait for Render to pick up the deploy.
+3. Run:
+
+```bash
+npm run record-backend-deploy
+```
+
+4. Commit the updated `.deploy/backend-sha` file.
+
+## Smoke
+
+Run:
+
+```bash
+npm run smoke
+```
+
+The smoke oracle automatically reads `.deploy/backend-sha` and `.deploy/frontend-sha`.

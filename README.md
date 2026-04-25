@@ -27,8 +27,10 @@ npm run worker
 Run the oracle smoke test against the deployed backend:
 
 ```bash
-EXPECTED_SHA=$(git rev-parse HEAD) npm run smoke
+npm run smoke
 ```
+
+The smoke test reads `.deploy/backend-sha` and `.deploy/frontend-sha`. If those files are missing, it falls back to `EXPECTED_SHA` for backward compatibility.
 
 ## Architecture
 
