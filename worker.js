@@ -7,6 +7,7 @@ const BASE_URL = (process.env.MISSION_CONTROL_URL || 'http://127.0.0.1:8787').re
 const TOKEN = process.env.MISSION_CONTROL_WORKER_TOKEN || process.env.MISSION_CONTROL_API_TOKEN || process.env.OPENCLAW_TOKEN || '';
 const WORKER_ID = process.env.WORKER_ID || `worker-${os.hostname()}-${process.pid}`;
 const OPENCLAW_BIN = process.env.OPENCLAW_BIN || 'openclaw';
+const HERMES_BIN = process.env.HERMES_BIN || 'hermes';
 const OPENCLAW_CHANNEL = process.env.OPENCLAW_AGENT_CHANNEL || '';
 const OPENCLAW_DEFAULT_AGENT = process.env.OPENCLAW_DEFAULT_AGENT || 'guy';
 const CLAIM_SLEEP_MS = Number(process.env.WORKER_CLAIM_SLEEP_MS || 2000);
@@ -46,12 +47,12 @@ function tailPush(arr, line, max = 200) {
   while (arr.length > max) arr.shift();
 }
 
-function describeOpenClawCommand(run, workerMessage) {
-  return `${OPENCLAW_BIN} ${buildOpenClawArgs(run, workerMessage).map(a => JSON.stringify(a)).join(' ')}`;
+function describeAgentCommand(command) {
+  return `${command.binary} ${command.args.map(a => JSON.stringify(a)).join(' ')}`;
 }
 
 const STARTUP_PROBE_TIMEOUT_MS = Number(process.env.WORKER_STARTUP_PROBE_TIMEOUT_MS || 15_000);
-const HEALTH_PROBE_NAME = 'config_validate';
+const HEALTH_PROBE_NAME = 'openclaw+hermes';
 
 function parseJsonOutput(text) {
   const raw = String(text || '').trim();
@@ -93,7 +94,7 @@ async function probeOpenClaw() {
         ok: true,
         reason: null,
         details: {
-          probe: HEALTH_PROBE_NAME,
+          probe: 'openclaw config validate --json',
           durationMs,
           configPath: parsed.configPath || parsed.path || null,
           checks: parsed.checks || null,
@@ -130,6 +131,37 @@ async function probeOpenClaw() {
   };
 }
 
+async function probeHermes() {
+  const startedAt = Date.now();
+  const result = spawnSync(HERMES_BIN, ['--version'], {
+    encoding: 'utf8',
+    env: process.env,
+    timeout: STARTUP_PROBE_TIMEOUT_MS
+  });
+  const durationMs = Date.now() - startedAt;
+  const stdout = String(result.stdout || '').trim();
+  const stderr = String(result.stderr || '').trim();
+
+  if (result.error) {
+    return { ok: false, reason: `hermes --version error: ${result.error.message}`, details: { durationMs, stdout, stderr } };
+  }
+  if (result.status !== 0) {
+    return { ok: false, reason: `hermes --version exited ${result.status}${stderr ? ` stderr=${stderr}` : ''}${stdout ? ` stdout=${stdout}` : ''}`, details: { durationMs, stdout, stderr } };
+  }
+  if (!stdout && !stderr) {
+    return { ok: false, reason: 'hermes --version returned no output', details: { durationMs, stdout, stderr } };
+  }
+  return {
+    ok: true,
+    reason: null,
+    details: {
+      probe: 'hermes --version',
+      durationMs,
+      version: stdout || stderr || null
+    }
+  };
+}
+
 function normalizeOpenClawAgentId(agentId) {
   const value = String(agentId || '').trim().toLowerCase();
   if (!value) return null;
@@ -138,12 +170,20 @@ function normalizeOpenClawAgentId(agentId) {
   return null;
 }
 
-function buildOpenClawArgs(run, workerMessage) {
-  const agentId = normalizeOpenClawAgentId(run.agent_id) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
-  const args = ['agent', '--json', '--session-id', run.id, '--message', workerMessage];
-  if (agentId) args.push('--agent', agentId);
+function buildAgentCommand(agentId, message, sessionId) {
+  const normalizedAgentId = String(agentId || '').trim().toLowerCase();
+  if (normalizedAgentId === 'hermy') {
+    return {
+      binary: HERMES_BIN,
+      args: ['chat', '-Q', '-t', 'messaging', '-q', message]
+    };
+  }
+
+  const openClawAgentId = normalizeOpenClawAgentId(normalizedAgentId) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
+  const args = ['agent', '--json', '--session-id', sessionId, '--message', message];
+  if (openClawAgentId) args.push('--agent', openClawAgentId);
   if (OPENCLAW_CHANNEL) args.push('--channel', OPENCLAW_CHANNEL);
-  return args;
+  return { binary: OPENCLAW_BIN, args };
 }
 
 async function postEvent(runId, event) {
@@ -235,8 +275,10 @@ async function runClaimed(job) {
   stderrTail = [];
 
   const workerMessage = job.worker_message || currentRun.worker_message;
-  const args = job.openclaw_args || buildOpenClawArgs(currentRun, workerMessage);
-  const commandPreview = describeOpenClawCommand(currentRun, workerMessage);
+  const command = job.agent_binary && Array.isArray(job.agent_args)
+    ? { binary: job.agent_binary, args: job.agent_args }
+    : buildAgentCommand(currentRun.agent_id, workerMessage, currentRun.id);
+  const commandPreview = describeAgentCommand(command);
   console.log(`[worker] claimed ${currentRun.id}: ${commandPreview}`);
 
   await postEvent(currentRun.id, {
@@ -245,7 +287,7 @@ async function runClaimed(job) {
   });
 
   let settled = false;
-  const child = spawn(OPENCLAW_BIN, args, {
+  const child = spawn(command.binary, command.args, {
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe']
   });
@@ -348,11 +390,11 @@ async function runClaimed(job) {
 
 async function main() {
   console.log(`[worker] starting ${WORKER_ID} -> ${BASE_URL}`);
-  const probe = await probeOpenClaw();
-  workerReady = Boolean(probe.ok);
-  workerUnhealthyReason = probe.ok ? null : probe.reason || 'config_validate_failed';
+  const [openclawProbe, hermesProbe] = await Promise.all([probeOpenClaw(), probeHermes()]);
+  workerReady = Boolean(openclawProbe.ok && hermesProbe.ok);
+  workerUnhealthyReason = !openclawProbe.ok ? openclawProbe.reason : !hermesProbe.ok ? hermesProbe.reason : null;
   if (workerReady) {
-    console.log(`[worker] config validate ok: probe=${probe.details?.probe || HEALTH_PROBE_NAME} configPath=${probe.details?.configPath || 'unknown'} duration=${probe.details?.durationMs ?? 'n/a'}ms`);
+    console.log(`[worker] harness probes ok: openclaw=${openclawProbe.details?.configPath || 'unknown'} hermes=${hermesProbe.details?.version || 'ok'} duration=${openclawProbe.details?.durationMs ?? 'n/a'}ms/${hermesProbe.details?.durationMs ?? 'n/a'}ms`);
   } else {
     console.error(`[worker] unhealthy: ${workerUnhealthyReason}`);
   }
