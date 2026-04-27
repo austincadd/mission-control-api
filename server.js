@@ -23,6 +23,7 @@ const WORKER_CLAIM_TTL_MS = Number(process.env.WORKER_CLAIM_TTL_MS || 30_000);
 const WORKER_HEARTBEAT_TTL_MS = Number(process.env.WORKER_HEARTBEAT_TTL_MS || 60_000);
 const WORKER_HEARTBEAT_INTERVAL_MS = Number(process.env.WORKER_HEARTBEAT_INTERVAL_MS || 15_000);
 const WORKER_SWEEP_INTERVAL_MS = Number(process.env.WORKER_SWEEP_INTERVAL_MS || 5_000);
+const OPENCLAW_DEFAULT_AGENT = process.env.OPENCLAW_DEFAULT_AGENT || 'guy';
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -248,8 +249,32 @@ function normalizeOpenClawAgentId(agentId) {
   return null;
 }
 
+function buildAgentCommand(agentId, message, sessionId) {
+  const normalizedAgentId = String(agentId || '').trim().toLowerCase();
+  if (normalizedAgentId === 'hermy') {
+    return {
+      binary: 'hermes',
+      args: ['chat', '-Q', '-t', 'messaging', '-q', message]
+    };
+  }
+
+  const openClawAgentId = normalizeOpenClawAgentId(normalizedAgentId) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
+  const args = ['agent', '--json', '--session-id', sessionId, '--message', message];
+  if (openClawAgentId) args.push('--agent', openClawAgentId);
+  return { binary: 'openclaw', args };
+}
+
 function buildWorkerMessage(run) {
   const dispatchContext = run.dispatch_context || {};
+  const task = dispatchContext.task || {};
+  const title = String(task.title || '').trim();
+  const description = String(task.description || '').trim();
+  const hermyInstruction = [title, description].filter(Boolean).join('\n\n');
+
+  if (String(run.agent_id || '').trim().toLowerCase() === 'hermy') {
+    return hermyInstruction || title || description || '';
+  }
+
   return [
     `Mission Control run_id: ${run.id}`,
     `Task ID: ${run.task_id}`,
@@ -817,11 +842,13 @@ app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
 
   const refreshed = getRun(db, run.id);
   const workerMessage = refreshed.worker_message || buildWorkerMessage(refreshed);
-  const normalizedAgent = normalizeOpenClawAgentId(refreshed.agent_id) || normalizeOpenClawAgentId(OPENCLAW_DEFAULT_AGENT);
+  const agentCommand = buildAgentCommand(refreshed.agent_id, workerMessage, refreshed.id);
   res.json({
     run: compactRun(refreshed, getEventsForRun(db, run.id)),
     worker_message: workerMessage,
-    openclaw_args: ['agent', '--json', '--session-id', refreshed.id, '--message', workerMessage, ...(normalizedAgent ? ['--agent', normalizedAgent] : [])],
+    agent_binary: agentCommand.binary,
+    agent_args: agentCommand.args,
+    openclaw_args: agentCommand.binary === 'openclaw' ? agentCommand.args : null,
     claim_ttl_ms: WORKER_CLAIM_TTL_MS,
     heartbeat_interval_ms: WORKER_HEARTBEAT_INTERVAL_MS
   });
