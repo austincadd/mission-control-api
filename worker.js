@@ -50,58 +50,83 @@ function describeOpenClawCommand(run, workerMessage) {
   return `${OPENCLAW_BIN} ${buildOpenClawArgs(run, workerMessage).map(a => JSON.stringify(a)).join(' ')}`;
 }
 
-function probeStep(args, label) {
-  const result = spawnSync(OPENCLAW_BIN, args, {
-    encoding: 'utf8',
-    env: process.env,
-    timeout: Number(process.env.WORKER_STARTUP_PROBE_TIMEOUT_MS || 15_000)
-  });
-  if (result.error) {
-    return { ok: false, reason: `${label} error: ${result.error.message}` };
-  }
-  if (result.status !== 0) {
-    const stderr = String(result.stderr || '').trim();
-    const stdout = String(result.stdout || '').trim();
-    return { ok: false, reason: `${label} exited ${result.status}${stderr ? ` stderr=${stderr}` : ''}${stdout ? ` stdout=${stdout}` : ''}` };
-  }
-  return { ok: true, stdout: String(result.stdout || '').trim(), stderr: String(result.stderr || '').trim() };
+const STARTUP_PROBE_TIMEOUT_MS = Number(process.env.WORKER_STARTUP_PROBE_TIMEOUT_MS || 15_000);
+const HEALTH_PROBE_NAME = 'config_validate';
+
+function parseJsonOutput(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return { ok: false, error: 'empty output' };
+  return { ok: true, value: JSON.parse(raw) };
 }
 
 async function probeOpenClaw() {
-  const probeId = `worker-health-probe-${process.pid}-${Date.now()}`;
-  const probe = probeStep(
-    ['agent', '--json', '--session-id', probeId, '--timeout', '20', '--message', 'health probe: reply with ok only'],
-    'openclaw agent --json'
-  );
-  if (!probe.ok) return probe;
+  const startedAt = Date.now();
+  const result = spawnSync(OPENCLAW_BIN, ['config', 'validate', '--json'], {
+    encoding: 'utf8',
+    env: process.env,
+    timeout: STARTUP_PROBE_TIMEOUT_MS
+  });
+  const durationMs = Date.now() - startedAt;
+  const stdout = String(result.stdout || '').trim();
+  const stderr = String(result.stderr || '').trim();
 
-  let parsed;
-  try {
-    parsed = JSON.parse(probe.stdout || '{}');
-  } catch (err) {
-    return { ok: false, reason: `openclaw agent --json returned invalid JSON: ${err.message}` };
+  if (result.error) {
+    return { ok: false, reason: `openclaw config validate --json error: ${result.error.message}`, details: { durationMs, stdout, stderr } };
   }
 
-  const status = String(parsed.status || '').trim();
-  const summary = String(parsed.summary || '').trim();
-  const payloadText = parsed?.result?.payloads?.[0]?.text;
-  if (status !== 'ok' || summary !== 'completed' || payloadText !== 'ok') {
+  let parsedResult;
+  try {
+    parsedResult = parseJsonOutput(stdout || stderr || '');
+  } catch (err) {
     return {
       ok: false,
-      reason: `openclaw agent probe unexpected result: status=${status || 'empty'} summary=${summary || 'empty'} payload=${JSON.stringify(payloadText)}`
+      reason: `openclaw config validate --json returned invalid JSON: ${err.message}${stdout ? ` stdout=${stdout}` : ''}${stderr ? ` stderr=${stderr}` : ''}`,
+      details: { durationMs, stdout, stderr }
+    };
+  }
+
+  if (parsedResult.ok) {
+    const parsed = parsedResult.value;
+    const isValid = parsed?.ok === true || parsed?.valid === true;
+    if (isValid) {
+      return {
+        ok: true,
+        reason: null,
+        details: {
+          probe: HEALTH_PROBE_NAME,
+          durationMs,
+          configPath: parsed.configPath || parsed.path || null,
+          checks: parsed.checks || null,
+          refsChecked: typeof parsed.refsChecked === 'number' ? parsed.refsChecked : null,
+          skippedExecRefs: typeof parsed.skippedExecRefs === 'number' ? parsed.skippedExecRefs : null
+        }
+      };
+    }
+
+    const errors = Array.isArray(parsed?.errors) ? parsed.errors : [];
+    const configError = errors
+      .map(error => String(error?.message || error?.ref || '').trim())
+      .filter(Boolean)
+      .join('; ') || String(parsed?.error || parsed?.message || '').trim();
+    return {
+      ok: false,
+      reason: `openclaw config validate failed${configError ? `: ${configError}` : ''}`,
+      details: { durationMs, stdout, stderr, configPath: parsed?.configPath || parsed?.path || null, errors }
+    };
+  }
+
+  if (result.status !== 0) {
+    return {
+      ok: false,
+      reason: `openclaw config validate --json exited ${result.status}${stderr ? ` stderr=${stderr}` : ''}${stdout ? ` stdout=${stdout}` : ''}`,
+      details: { durationMs, stdout, stderr }
     };
   }
 
   return {
-    ok: true,
-    reason: null,
-    details: {
-      status,
-      summary,
-      payload: payloadText,
-      durationMs: parsed?.result?.meta?.durationMs ?? null,
-      sessionId: parsed?.result?.meta?.agentMeta?.sessionId || probeId
-    }
+    ok: false,
+    reason: `openclaw config validate --json returned invalid JSON${stdout ? ` stdout=${stdout}` : ''}${stderr ? ` stderr=${stderr}` : ''}`,
+    details: { durationMs, stdout, stderr }
   };
 }
 
@@ -163,7 +188,8 @@ async function heartbeat() {
         host: os.hostname(),
         pid: process.pid,
         healthy: workerReady,
-        health_reason: workerReady ? null : workerUnhealthyReason
+        health_reason: workerReady ? null : workerUnhealthyReason,
+        health_probe: HEALTH_PROBE_NAME
       })
     });
     if (!response.ok) return;
@@ -324,9 +350,9 @@ async function main() {
   console.log(`[worker] starting ${WORKER_ID} -> ${BASE_URL}`);
   const probe = await probeOpenClaw();
   workerReady = Boolean(probe.ok);
-  workerUnhealthyReason = probe.ok ? null : probe.reason || 'openclaw_probe_failed';
+  workerUnhealthyReason = probe.ok ? null : probe.reason || 'config_validate_failed';
   if (workerReady) {
-    console.log(`[worker] openclaw probe ok: session ${probe.details?.sessionId || 'unknown'} duration=${probe.details?.durationMs ?? 'n/a'}ms`);
+    console.log(`[worker] config validate ok: probe=${probe.details?.probe || HEALTH_PROBE_NAME} configPath=${probe.details?.configPath || 'unknown'} duration=${probe.details?.durationMs ?? 'n/a'}ms`);
   } else {
     console.error(`[worker] unhealthy: ${workerUnhealthyReason}`);
   }

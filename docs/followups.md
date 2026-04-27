@@ -35,7 +35,7 @@ This file tracks known gaps that were deliberately deferred in the recent audit 
 ## 6. Frontend allows dispatch while worker is degraded
 - **Description:** `dispatchTask` queues runs regardless of probe state.
 - **Reference:** `index.html:329-337`
-- **Why deferred:** Runs should fail loudly once Fix 4’s real probe rejects unhealthy workers, so this was left as-is.
+- **Why deferred:** The worker health probe was intentionally narrowed to `openclaw config validate --json` so startup health only proves the binary and config schema, not gateway/model/runtime execution. Real execution capability is still validated by the first claimed run, so this UI behavior was left as-is.
 - **Priority:** low
 
 ## 7. SSE connections don’t use gateway fallback candidates

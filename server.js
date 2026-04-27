@@ -791,7 +791,8 @@ app.post('/api/worker/claim', requireWorkerAuth, (req, res) => {
       host: req.body?.host || null,
       pid: req.body?.pid || null,
       healthy: typeof req.body?.healthy === 'boolean' ? req.body.healthy : true,
-      health_reason: req.body?.health_reason || null
+      health_reason: req.body?.health_reason || null,
+      health_probe: req.body?.health_probe || null
     });
     return res.status(204).end();
   }
@@ -948,7 +949,8 @@ app.post('/api/worker/heartbeat', requireWorkerAuth, (req, res) => {
     host,
     pid,
     healthy: typeof req.body?.healthy === 'boolean' ? req.body.healthy : true,
-    health_reason: req.body?.health_reason || null
+    health_reason: req.body?.health_reason || null,
+    health_probe: req.body?.health_probe || null
   });
 
   const cancelled_run_ids = listCancelledRunsForWorker(db, workerId);

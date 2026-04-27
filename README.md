@@ -112,12 +112,28 @@ Run payloads returned to clients are compact by design.
 
 ## Worker health behavior
 
-The worker now probes OpenClaw at startup and refuses to claim runs unless the probe succeeds.
+The worker probes OpenClaw at startup with `openclaw config validate --json` to confirm the binary is installed and the config is schema-valid.
 
-If OpenClaw is unavailable, the worker reports:
+What this *does* verify:
+
+- the `openclaw` binary is runnable
+- the active config parses and validates
+- the worker can report a clean startup health check
+
+What this *does not* verify:
+
+- gateway connectivity
+- model reachability
+- that real agent runs will succeed
+
+Those are confirmed by the first claimed run.
+
+When the probe succeeds, the worker reports `health_probe: config_validate` and stays eligible to claim runs.
+
+If validation fails, the worker reports:
 
 - `healthy: false`
-- `health_reason: <reason>`
+- `health_reason: <specific config error>`
 
 That state is surfaced by `/api/worker/status` and the smoke test treats it as `worker_unhealthy`.
 
@@ -150,7 +166,7 @@ Authorization: Bearer ***
 - `OPENCLAW_AGENT_CHANNEL` (worker only; optional channel override)
 - `MISSION_CONTROL_URL` (worker only; default `http://127.0.0.1:8787`)
 - `WORKER_STARTUP_PROBE_TIMEOUT_MS` (worker only; startup probe timeout)
-- `SMOKE_POLL_TIMEOUT` (smoke only; default `120`)
+- `SMOKE_POLL_TIMEOUT` (smoke only; default `180`)
 - `SMOKE_POLL_INTERVAL` (smoke only; default `2`)
 - `SMOKE_WORKER_MAX_AGE` (smoke only; default `90`)
 - `EXPECTED_SHA` (smoke only; deploy SHA oracle)
