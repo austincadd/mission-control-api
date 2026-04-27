@@ -307,6 +307,7 @@ async function openTask(id){
  el('detailPanel').innerHTML=`<div class='row space'><strong>Task Detail</strong><button id='closePanel'>Close</button></div>
  <input id='dTitle' value='${esc(task.title)}' style='width:100%;margin-top:8px'>
  <div class='row' style='margin-top:8px'><select id='dStatus'>${ITEM_STATUS.map(s=>`<option ${task.status===s?'selected':''}>${s}</option>`).join('')}</select><select id='dPriority'>${PRIORITY.map(p=>`<option ${task.priority===p?'selected':''}>${p}</option>`).join('')}</select></div>
+ <div class='row' style='margin-top:8px'><select id='dAgent' style='min-width:180px'><option value='' ${!task.assigned_agent_id?'selected':''}>Unassigned</option>${state.agents.map(a=>`<option value='${esc(a.id)}' ${task.assigned_agent_id===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>
  <textarea id='dDesc' style='width:100%;margin-top:8px'>${esc(task.description||'')}</textarea>
  <div class='row space' style='margin-top:8px'><div class='row'><button class='btn' id='runTaskBtn'>Run Task (R)</button><button id='cancelRunBtn' ${!latest||!['queued','running'].includes(latest.status)?'disabled':''}>Cancel</button><button id='retryRunBtn' ${!latest?'disabled':''}>Retry</button></div><button id='saveTaskBtn'>Save</button></div>
  <div style='margin-top:10px'><strong>Runs</strong><div class='card' style='padding:8px;margin-top:6px;max-height:170px;overflow:auto'>${runs.map(r=>`<div style='padding:6px 0;border-bottom:1px solid var(--line)'><div class='row space'><span>${badgeStatus(r.status)} <span class='muted'>${new Date(r.started_at).toLocaleTimeString()}</span></span><button data-pick-run='${r.id}'>View</button></div>${r.status==='failed'&&r.failure_summary?`<div class='muted' style='font-size:11px;margin-top:4px'>⚠ ${esc(r.failure_summary)}</div>`:''}</div>`).join('')||'<div class="muted">No runs yet</div>'}</div></div>
@@ -320,7 +321,8 @@ function renderEvents(events){return (events||[]).slice(-80).map(e=>`<div><span 
 
 function bindTaskPanel(task,latest){
  el('closePanel').onclick=closePanel;
- el('saveTaskBtn').onclick=()=>{task.title=el('dTitle').value.trim()||task.title;task.status=el('dStatus').value;task.priority=el('dPriority').value;task.description=el('dDesc').value;task.activity=task.activity||[];task.activity.push({at:now(),text:'Task updated'});save();render();toast('Saved');openTask(task.id)};
+ el('saveTaskBtn').onclick=()=>{task.title=el('dTitle').value.trim()||task.title;task.status=el('dStatus').value;task.priority=el('dPriority').value;task.assigned_agent_id=el('dAgent').value||null;task.description=el('dDesc').value;task.activity=task.activity||[];task.activity.push({at:now(),text:'Task updated'});save();render();toast('Saved');openTask(task.id)};
+ el('dAgent').onchange=()=>{task.assigned_agent_id=el('dAgent').value||null;save();render();openTask(task.id)};
  el('runTaskBtn').onclick=()=>dispatchTask(task);
  el('cancelRunBtn').onclick=async()=>{if(!latest) return;try{await api.cancel(latest.id);toast('Run cancelled');await refreshTaskRuns(task.id);}catch(err){toast('Cancel failed')}};
  el('retryRunBtn').onclick=async()=>{if(!latest) return;try{const out=await api.retry(latest.id,{model:state.settings.defaultModel,agent_id:task.assigned_agent_id});toast('Retry queued');await refreshTaskRuns(task.id);connectRun(out.run.id);}catch(err){toast('Retry failed')}};
