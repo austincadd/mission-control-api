@@ -11,5 +11,5 @@ if [ -f "$API_TOKEN_FILE" ]; then
   export MISSION_CONTROL_API_TOKEN="$MISSION_CONTROL_WORKER_TOKEN"
 fi
 
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="/Users/austincaddell/.hermes/hermes-agent/venv/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 exec /usr/local/bin/npm run worker
