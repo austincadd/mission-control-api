@@ -274,7 +274,7 @@ function renderItems(kind){
 
 function renderOverview(){
  const feed=(state.activity||[]).slice(0,40);
- el('content').innerHTML=`<div class='card' style='padding:12px;margin-bottom:10px'><strong>Global Activity Feed</strong><div class='muted' style='margin:4px 0 8px'>Streaming from /api/activity/stream</div><div class='activity-feed'>${feed.map(e=>`<div class='card' style='padding:8px'><div class='row space'><span class='event-pill'>${esc(e.type)}</span><span class='muted' style='font-size:11px'>${new Date(e.timestamp).toLocaleTimeString()}</span></div><div style='font-size:12px;margin-top:4px'>run ${esc(e.run_id)}</div></div>`).join('')||'<div class="muted">No activity yet.</div>'}</div></div>`;
+ el('content').innerHTML=`<div class='card' style='padding:12px;margin-bottom:10px'><strong>Global Activity Feed</strong><div class='muted' style='margin:4px 0 8px'>Streaming from /api/activity/stream</div><div class='activity-feed'>${feed.map(e=>{const type=e.type||e.kind||'event';const ts=e.timestamp||e.at||now();const label=e.title||e.detail||e.run_id||'';return `<div class='card' style='padding:8px'><div class='row space'><span class='event-pill'>${esc(type)}</span><span class='muted' style='font-size:11px'>${new Date(ts).toLocaleTimeString()}</span></div><div style='font-size:12px;margin-top:4px'>${label?esc(label):'<span class="muted">No details</span>'}</div></div>`}).join('')||'<div class="muted">No activity yet.</div>'}</div></div>`;
 }
 
 function renderSettings(){
@@ -309,7 +309,7 @@ async function openTask(id){
  <div class='row' style='margin-top:8px'><select id='dStatus'>${ITEM_STATUS.map(s=>`<option ${task.status===s?'selected':''}>${s}</option>`).join('')}</select><select id='dPriority'>${PRIORITY.map(p=>`<option ${task.priority===p?'selected':''}>${p}</option>`).join('')}</select></div>
  <div class='row' style='margin-top:8px'><select id='dAgent' style='min-width:180px'><option value='' ${!task.assigned_agent_id?'selected':''}>Unassigned</option>${state.agents.map(a=>`<option value='${esc(a.id)}' ${task.assigned_agent_id===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>
  <textarea id='dDesc' style='width:100%;margin-top:8px'>${esc(task.description||'')}</textarea>
- <div class='row space' style='margin-top:8px'><div class='row'><button class='btn' id='runTaskBtn'>Run Task (R)</button><button id='cancelRunBtn' ${!latest||!['queued','running'].includes(latest.status)?'disabled':''}>Cancel</button><button id='retryRunBtn' ${!latest?'disabled':''}>Retry</button></div><button id='saveTaskBtn'>Save</button></div>
+ <div class='row space' style='margin-top:8px'><div class='row'><button class='btn' id='runTaskBtn'>Run Task (R)</button><button id='cancelRunBtn' ${!latest||!['queued','running'].includes(latest.status)?'disabled':''}>Cancel</button><button id='retryRunBtn' ${!latest?'disabled':''}>Retry</button></div><div class='row'><button id='deleteTaskBtn' style='border-color:#5a2525;color:#f1aaaa'>Delete</button><button id='saveTaskBtn'>Save</button></div></div>
  <div style='margin-top:10px'><strong>Runs</strong><div class='card' style='padding:8px;margin-top:6px;max-height:170px;overflow:auto'>${runs.map(r=>`<div style='padding:6px 0;border-bottom:1px solid var(--line)'><div class='row space'><span>${badgeStatus(r.status)} <span class='muted'>${new Date(r.started_at).toLocaleTimeString()}</span></span><button data-pick-run='${r.id}'>View</button></div>${r.status==='failed'&&r.failure_summary?`<div class='muted' style='font-size:11px;margin-top:4px'>⚠ ${esc(r.failure_summary)}</div>`:''}</div>`).join('')||'<div class="muted">No runs yet</div>'}</div></div>
  <div style='margin-top:10px'><strong>Live Run Panel</strong><div class='muted' style='font-size:12px'>${latest?`Run ${latest.id}`:'Dispatch to begin'}</div>${latest&&latest.status==='failed'?`<div class='card' style='padding:8px;margin:6px 0'><div><strong>Failure summary</strong></div><div style='font-size:12px;margin-top:4px'>${esc(latestFailureSummary(latest,cache.events||[]))||'<span class="muted">No summary available</span>'}</div><details style='margin-top:6px'><summary style='cursor:pointer'>Raw failure logs</summary><div class='run-events' style='margin-top:6px'>${renderEvents(rawFailureLogs(cache.events||[]))}</div></details></div>`:''}<div id='runEvents' class='run-events'>${renderEvents(cache.events||[])}</div></div>`;
  el('detailPanel').dataset.taskId=id;
@@ -326,7 +326,29 @@ function bindTaskPanel(task,latest){
  el('runTaskBtn').onclick=()=>dispatchTask(task);
  el('cancelRunBtn').onclick=async()=>{if(!latest) return;try{await api.cancel(latest.id);toast('Run cancelled');await refreshTaskRuns(task.id);}catch(err){toast('Cancel failed')}};
  el('retryRunBtn').onclick=async()=>{if(!latest) return;try{const out=await api.retry(latest.id,{model:state.settings.defaultModel,agent_id:task.assigned_agent_id});toast('Retry queued');await refreshTaskRuns(task.id);connectRun(out.run.id);}catch(err){toast('Retry failed')}};
+ el('deleteTaskBtn').onclick=()=>deleteTask(task.id);
  document.querySelectorAll('[data-pick-run]').forEach(b=>b.onclick=()=>connectRun(b.dataset.pickRun));
+}
+
+function deleteTask(taskId){
+ const t=state.tasks.find(x=>x.id===taskId);
+ if(!t) return;
+ const active=activeRunForTask(taskId);
+ if(active){
+  toast('Cannot delete while a run is queued/running. Cancel the run first.');
+  return;
+ }
+ if(!confirm(`Delete task "${t.title}"? This removes it from Mission Control.`)) return;
+ state.tasks=state.tasks.filter(x=>x.id!==taskId);
+ Object.keys(state.runCache||{}).forEach(runId=>{
+  const run=state.runCache[runId]?.run;
+  if(run?.task_id===taskId) delete state.runCache[runId];
+ });
+ state.activity.unshift({id:uid(),type:'task',timestamp:now(),run_id:'',title:'Task deleted',detail:t.title,kind:'task'});
+ save();
+ closePanel();
+ render();
+ toast('Task deleted');
 }
 
 async function dispatchTask(task){
