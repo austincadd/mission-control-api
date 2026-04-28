@@ -8,12 +8,15 @@
     :root{--bg:#0c1017;--panel:#121926;--panel2:#1a2436;--line:#2a3448;--text:#e6ebf7;--muted:#97a4bb;--accent:#79a7ff;--ok:#33cc8a;--warn:#f1b44f;--danger:#ff6f7c;--radius:12px;--font:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial}
     body.light{--bg:#f4f7fc;--panel:#fff;--panel2:#f7f9ff;--line:#dbe3f3;--text:#1d2432;--muted:#5d6b84}
     *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:radial-gradient(circle at top right,rgba(120,160,255,.12),transparent 35%),var(--bg);color:var(--text);font-family:var(--font)}
-    .app{display:grid;grid-template-columns:260px 1fr;height:100vh}.sidebar{border-right:1px solid var(--line);padding:12px;display:grid;grid-template-rows:auto auto 1fr auto;gap:10px;background:var(--panel)}
-    .main{display:grid;grid-template-rows:auto auto 1fr}.top{padding:12px;border-bottom:1px solid var(--line);display:grid;gap:8px}.content{padding:12px;overflow:auto}
+    .app{display:grid;grid-template-columns:272px 1fr;height:100vh}.sidebar{border-right:1px solid var(--line);padding:14px;display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.015),transparent),var(--panel)}
+    .sidebar-head{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:2px 2px 0}.eyebrow{font-size:16px;font-weight:700;letter-spacing:-.01em}.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 6px 2px}.sidebar-section{display:grid;gap:8px}.sidebar-footer{align-content:end}
+    .main{display:grid;grid-template-rows:auto auto 1fr}.top{padding:14px 14px 12px;border-bottom:1px solid var(--line);display:grid;gap:10px}.content{padding:12px;overflow:auto}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.title-stack{display:grid;gap:4px;min-width:0}.page-title{font-size:18px;font-weight:700;letter-spacing:-.01em}.page-subtitle{font-size:12px;color:var(--muted)}.action-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}.toolbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}.system-actions{display:grid;gap:8px}.system-actions>summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03);cursor:pointer;color:var(--text)}.system-actions>summary::-webkit-details-marker{display:none}.system-actions[open]>summary{background:rgba(255,255,255,.05)}.system-actions-panel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px}
     button,input,select,textarea{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px} input,select,textarea{padding:9px} button{padding:8px 10px;cursor:pointer}
-    .btn{background:linear-gradient(180deg,#8ab1ff,#6f99ef);color:#06122e;border:none;font-weight:600}.project-list{overflow:auto;display:grid;gap:6px}
-    .project-item{padding:9px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.project-item.active{background:var(--panel2);border-color:#4d6392}
-    .row{display:flex;align-items:center;gap:8px}.space{justify-content:space-between}.muted{color:var(--muted)} .tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:transparent;cursor:pointer}.tab.active{background:var(--panel2)}
+    .btn{background:linear-gradient(180deg,#8ab1ff,#6f99ef);color:#06122e;border:none;font-weight:600}.secondary-btn{background:rgba(255,255,255,.03);color:var(--text)}.danger-btn{background:rgba(255,111,124,.08);color:#ffd1d6;border-color:rgba(255,111,124,.18)}.project-list{overflow:auto;display:grid;gap:8px}
+    .project-item{padding:12px 12px 10px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.02);display:grid;gap:4px}.project-item.active{background:linear-gradient(180deg,rgba(121,167,255,.18),rgba(121,167,255,.08));border-color:rgba(121,167,255,.42);box-shadow:0 0 0 1px rgba(121,167,255,.12) inset}
+    .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.space{justify-content:space-between}.muted{color:var(--muted)} .tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.02);cursor:pointer;color:var(--muted)}.tab.active{background:rgba(121,167,255,.16);color:var(--text);border-color:rgba(121,167,255,.4)}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:12px}.stats{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:10px}.stat{padding:10px}.stat .v{font-size:21px;font-weight:700}
     table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left} th{color:var(--muted);cursor:pointer}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}.dot{width:8px;height:8px;border-radius:50%}
@@ -31,16 +34,22 @@
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="row"><strong>Mission Control</strong><span class="muted" style="font-size:12px">Cmd/Ctrl+K</span></div>
-    <button id="newProjectBtn" class="btn">+ New Project</button>
-    <div id="projectList" class="project-list"></div>
-    <div class="row space"><button id="navProjects">Projects</button><button id="navAgents">Agents</button></div>
+    <div class="sidebar-head"><div class="eyebrow">Mission Control</div><span class="muted" style="font-size:12px">Cmd/Ctrl+K</span></div>
+    <div class="sidebar-section">
+      <div class="section-label">Workspace</div>
+      <button id="newProjectBtn" class="btn">+ New Project</button>
+      <div id="projectList" class="project-list"></div>
+    </div>
+    <div class="sidebar-section sidebar-footer">
+      <div class="section-label">Navigate</div>
+      <div class="row space"><button id="navProjects" class="secondary-btn">Projects</button><button id="navAgents" class="secondary-btn">Agents</button></div>
+    </div>
   </aside>
   <main class="main">
     <div class="top">
-      <div class="row space"><div id="titleWrap" style="font-weight:650"></div><div class="row"><button id="themeBtn">🌙 Dark</button><button id="openSettings">⚙️ Settings</button><button id="quickCreate">+ Create (C)</button></div></div>
+      <div class="topbar"><div class="title-stack"><div id="titleWrap" class="page-title"></div><div id="subtitleWrap" class="page-subtitle"></div></div><div class="action-group"><button id="themeBtn" class="secondary-btn">🌙 Dark</button><button id="openSettings" class="secondary-btn">⚙️ Settings</button><button id="quickCreate" class="btn">+ Create (C)</button></div></div>
       <div class="tabs" id="tabs"></div>
-      <div class="row" style="flex-wrap:wrap"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView">Board</button><button id="resetConnectionBtn">Reset connection only</button><button id="resetEverythingBtn">Reset everything</button><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span></div>
+      <div class="toolbar"><div class="toolbar-group"><input id="search" placeholder="Search..." style="min-width:180px;flex:1"><select id="fStatus"></select><select id="fPriority"></select><select id="fAgent"></select><button id="toggleView" class="secondary-btn">Board</button></div><div class="toolbar-group"><span id="connState" class="muted" style="font-size:12px">Backend: checking...</span><details class="system-actions"><summary>System actions</summary><div class="system-actions-panel"><button id="resetConnectionBtn" class="secondary-btn">Reset connection only</button><button id="resetEverythingBtn" class="danger-btn">Reset everything</button></div></details></div></div>
     </div>
     <section id="content" class="content"></section>
   </main>
@@ -254,7 +263,12 @@ function render(){
  renderItems(state.selectedTab==='Issues'?'issues':'tasks');
 }
 function renderSidebar(){el('projectList').innerHTML=state.projects.map(p=>`<div class='project-item ${p.id===state.selectedProjectId?'active':''}' data-pid='${p.id}'><div>${esc(p.icon||'📁')} ${esc(p.name)}</div><div class='muted' style='font-size:11px'>${esc(p.status||'Planned')}</div></div>`).join('')}
-function renderTop(){el('titleWrap').textContent=state.nav==='agents'?'Agents':`${project()?.icon||'📁'} ${project()?.name||''}`;el('tabs').innerHTML=state.nav==='agents'?'':['Tasks','Issues','Overview','Settings'].map(t=>`<button class='tab ${state.selectedTab===t?'active':''}' data-tab='${t}'>${t}</button>`).join('');document.body.classList.toggle('light',state.theme!=='dark');el('themeBtn').textContent=state.theme==='dark'?'🌙 Dark':'☀️ Light';fillFilters();bindTop();probeGateway();}
+function renderTop(){
+ const activeTitle=state.nav==='agents'?'Agents':`${project()?.icon||'📁'} ${project()?.name||''}`;
+ el('titleWrap').textContent=activeTitle;
+ const subtitle=el('subtitleWrap');
+ if(subtitle) subtitle.textContent=state.nav==='agents'?'Agent execution dashboards':`${project()?.status||'Active'} project workspace`;
+ el('tabs').innerHTML=state.nav==='agents'?'':['Tasks','Issues','Overview','Settings'].map(t=>`<button class='tab ${state.selectedTab===t?'active':''}' data-tab='${t}'>${t}</button>`).join('');document.body.classList.toggle('light',state.theme!=='dark');el('themeBtn').textContent=state.theme==='dark'?'🌙 Dark':'☀️ Light';fillFilters();bindTop();probeGateway();}
 function fillFilters(){el('fStatus').innerHTML=['All',...ITEM_STATUS].map(x=>`<option ${state.filters.status===x?'selected':''}>${x}</option>`).join('');el('fPriority').innerHTML=['All',...PRIORITY].map(x=>`<option ${state.filters.priority===x?'selected':''}>${x}</option>`).join('');el('fAgent').innerHTML=`<option value='All'>All</option>`+state.agents.map(a=>`<option value='${a.id}' ${state.filters.agent===a.id?'selected':''}>${esc(a.name)}</option>`).join('');el('search').value=state.filters.search}
 
 function filteredRows(kind){
